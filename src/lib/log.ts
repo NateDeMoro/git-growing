@@ -6,7 +6,7 @@ export const LOG_CAP = 5000;
 const KEY = "spray-or-wait.log.v1";
 
 export const CSV_HEADER = [
-  "time", "logged_at", "mode", "status", "status_changed", "product", "droplet", "reasons",
+  "time", "logged_at", "mode", "status", "status_changed", "product", "droplet", "nozzle", "reasons",
   "temp_5ft_F", "temp_30ft_F", "wind_5ft_mph", "wind_30ft_mph", "dir_5ft_deg", "dir_30ft_deg", "delta_t_C", "rain_in_hr",
 ];
 
@@ -20,7 +20,7 @@ export function csvField(v: string | number | boolean | null | undefined): strin
 export function toCsv(entries: LogEntry[]): string {
   const rows = entries.map((e) =>
     [
-      e.time, e.loggedAt, e.mode, e.status, e.statusChanged, e.productId, e.recommendedDroplet ?? "none",
+      e.time, e.loggedAt, e.mode, e.status, e.statusChanged, e.productId, e.recommendedDroplet ?? "none", e.nozzle ?? "",
       e.triggers.join("; "), e.lowerTempF, e.upperTempF, e.lowerWindMph, e.upperWindMph,
       e.lowerDirDeg, e.upperDirDeg, e.deltaTC, e.rainInHr,
     ].map(csvField).join(","),

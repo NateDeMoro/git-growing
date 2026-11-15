@@ -1,0 +1,30 @@
+{
+  "note": "Starting points only. Classes are TeeJet's published ISO 25358 / ASABE S572 water-spray classes for AITXA/AITXB-VK ceramic air-induction hollow-cone tips (air-blast); the pressure range is the span where that chart lists the stated class or coarser for the size. Colors are the ISO 10625 colors for the size code (as printed on Albuz ATI orchard hollow-cone tips). Confirm with your nozzle chart and the product label.",
+  "classes": {
+    "F": [
+      { "type": "air-induction hollow-cone ceramic", "model": "TeeJet AITXA/AITXB 8001-VK", "isoSize": "01", "isoColor": "orange", "psiMin": 220, "psiMax": 300 }
+    ],
+    "M": [
+      { "type": "air-induction hollow-cone ceramic", "model": "TeeJet AITXA/AITXB 8002-VK", "isoSize": "02", "isoColor": "yellow", "psiMin": 200, "psiMax": 260 },
+      { "type": "air-induction hollow-cone ceramic", "model": "TeeJet AITXA/AITXB 8004-VK", "isoSize": "04", "isoColor": "red", "psiMin": 220, "psiMax": 300 }
+    ],
+    "C": [
+      { "type": "air-induction hollow-cone ceramic", "model": "TeeJet AITXA/AITXB 8002-VK", "isoSize": "02", "isoColor": "yellow", "psiMin": 120, "psiMax": 180 },
+      { "type": "air-induction hollow-cone ceramic", "model": "TeeJet AITXA/AITXB 8001-VK", "isoSize": "01", "isoColor": "orange", "psiMin": 120, "psiMax": 140 }
+    ],
+    "VC": [
+      { "type": "air-induction hollow-cone ceramic", "model": "TeeJet AITXA/AITXB 8003-VK", "isoSize": "03", "isoColor": "blue", "psiMin": 100, "psiMax": 160 },
+      { "type": "air-induction hollow-cone ceramic", "model": "TeeJet AITXA/AITXB 8001-VK", "isoSize": "01", "isoColor": "orange", "psiMin": 70, "psiMax": 100 }
+    ],
+    "XC": [
+      { "type": "air-induction hollow-cone ceramic", "model": "TeeJet AITXA/AITXB 8003-VK", "isoSize": "03", "isoColor": "blue", "psiMin": 60, "psiMax": 90 },
+      { "type": "air-induction hollow-cone ceramic", "model": "TeeJet AITXA/AITXB 8004-VK", "isoSize": "04", "isoColor": "red", "psiMin": 80, "psiMax": 90 }
+    ]
+  },
+  "sources": [
+    { "id": "teejetAirBlast", "title": "TeeJet Catalog 52, Air Blast Nozzles (AITXA/AITXB air-induction hollow cone capacity and droplet-class table, p. 87)", "url": "https://www.teejet.com/en-eu/-/media/dam/agricultural/usa/sales-material/catalog/cat52-us_06-air_blast_nozzles.pdf" },
+    { "id": "albuzAti", "title": "Albuz ATI 80 orchard/vineyard hollow-cone nozzle sheet (ISO 10625 color and size codes)", "url": "https://documents.kramp.com/Albuz_ATI_DE.pdf" },
+    { "id": "wsuFs352e", "title": "WSU Extension FS352E, Common Interchangeable Nozzles for Perennial Crop Canopy Sprayers (nozzle type vs droplet class)", "url": "https://viticulture.uga.edu/files/2025/04/FS352E_Common-Interchangeable-Nozzles-for-Perennial-Crop-Canopy-Sprayers.pdf" },
+    { "id": "iso10625", "title": "ISO 10625:2018 Equipment for crop protection, Sprayer nozzles, Colour coding for identification (flow-rate color code; says nothing about droplet size)", "url": "https://www.iso.org/standard/70624.html" }
+  ]
+}

@@ -146,6 +146,7 @@ export interface LogEntry {
   statusChanged: boolean;
   productId: string;
   recommendedDroplet: DropletClass | null;
+  nozzle?: string; // top nozzle choice for the droplet class (empty when no chart supports it)
   triggers: string[]; // reason texts, worst first
   lowerTempF: number;
   upperTempF: number;

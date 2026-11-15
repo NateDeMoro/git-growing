@@ -1,5 +1,6 @@
 // Log-entry builder + deterministic sim logger. Use when: appending status changes / hourly readings to the log.
 // The sim logger scans EVERY frame between the last and current playhead, so skipped frames never hide a change.
+import { nozzleLabel } from "./nozzles";
 import type { Assessment, LogEntry, SceneFrame, Status } from "./contract";
 
 /** Frames per sim-hour at 5-minute steps. */
@@ -19,6 +20,7 @@ export function makeLogEntry(f: SceneFrame, a: Assessment, productId: string, st
     statusChanged,
     productId,
     recommendedDroplet: a.recommendedDroplet,
+    nozzle: nozzleLabel(a.recommendedDroplet),
     triggers: a.reasons.map((r) => r.text),
     lowerTempF: lo.tempF,
     upperTempF: up.tempF,

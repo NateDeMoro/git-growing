@@ -6,6 +6,7 @@
 | src/lib/uiStore.ts | Playback/UI store, uiActions, registerUiCallbacks | wiring hotkeys, camera, playback |
 | src/lib/log.ts | Log store (cap 5000), CSV | log or export bugs |
 | src/lib/assessCache.ts | Memoized assess per product+frame | status lags after product change |
+| src/lib/nozzles.ts, data/nozzles.json | Droplet class -> nozzle type, ISO 10625 color/size, psi range, sources | changing nozzle advice or its data |
 | src/lib/simLogger.ts | Log entry builder + frame-scanning sim logger | log dedupe/replay issues |
 | src/components/ForecastChart.tsx | 7-day 5 ft / 30 ft temps + NWS mixing height | forecast chart |
 | src/lib/stationFrame.ts | AZMet reading -> single-layer frame | station card |
