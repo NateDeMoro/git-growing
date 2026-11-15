@@ -6,7 +6,6 @@ import EarlyWarningBanner from "./EarlyWarningBanner";
 import ForecastStrip from "./ForecastStrip";
 import NextWindowCard from "./NextWindowCard";
 import ForecastChart from "./ForecastChart";
-import WindowDial from "./WindowDial";
 
 export default function ForecastPanel() {
   const { forecast, loadForecast, forecastFailed } = useUiData();
@@ -26,7 +25,6 @@ export default function ForecastPanel() {
         <ForecastStrip />
         <div className="space-y-4">
           <NextWindowCard />
-          <WindowDial />
         </div>
       </div>
       <ForecastChart />
