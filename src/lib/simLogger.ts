@@ -1,0 +1,78 @@
+// Log-entry builder + deterministic sim logger. Use when: appending status changes / hourly readings to the log.
+// The sim logger scans EVERY frame between the last and current playhead, so skipped frames never hide a change.
+import type { Assessment, LogEntry, SceneFrame, Status } from "./contract";
+
+/** Frames per sim-hour at 5-minute steps. */
+export const FRAMES_PER_HOUR = 12;
+/** A forward move larger than this many frames counts as a seek, not playback (no scan). */
+const SCAN_LIMIT = 24 * FRAMES_PER_HOUR;
+
+/** Use when: turning a frame + assessment into a LogEntry. */
+export function makeLogEntry(f: SceneFrame, a: Assessment, productId: string, statusChanged: boolean): LogEntry {
+  const lo = f.layers.find((l) => l.heightFt === 5)!;
+  const up = f.layers.find((l) => l.heightFt === 30)!;
+  return {
+    time: f.time,
+    loggedAt: new Date().toISOString(),
+    mode: f.mode,
+    status: a.status,
+    statusChanged,
+    productId,
+    recommendedDroplet: a.recommendedDroplet,
+    triggers: a.reasons.map((r) => r.text),
+    lowerTempF: lo.tempF,
+    upperTempF: up.tempF,
+    lowerWindMph: lo.windMph,
+    upperWindMph: up.windMph,
+    lowerDirDeg: lo.windDirDeg,
+    upperDirDeg: up.windDirDeg,
+    deltaTC: f.derived.deltaTC,
+    rainInHr: f.weather.rainInHr,
+  };
+}
+
+export interface SimLoggerDeps {
+  frameAt: (i: number) => SceneFrame;
+  assessAt: (i: number) => Assessment;
+  productId: string;
+  append: (e: LogEntry) => void;
+}
+
+/** Use when: the sim playhead moves. Logs each status change and the first frame of each sim-hour; dedupes on frame time. */
+export function createSimLogger(d: SimLoggerDeps) {
+  let last: number | null = null;
+  let lastStatus: Status = "GO";
+  const done = new Set<string>();
+
+  function emit(i: number, changed: boolean) {
+    const f = d.frameAt(i);
+    if (done.has(f.time)) return;
+    done.add(f.time);
+    d.append(makeLogEntry(f, d.assessAt(i), d.productId, changed));
+  }
+
+  return {
+    update(idx: number) {
+      if (last === null) {
+        last = idx;
+        lastStatus = d.assessAt(idx).status;
+        return;
+      }
+      if (idx === last) return;
+      if (idx > last && idx - last <= SCAN_LIMIT) {
+        for (let i = last + 1; i <= idx; i++) {
+          const s = d.assessAt(i).status;
+          const changed = s !== lastStatus;
+          const hourStart = d.frameAt(i).time.slice(14, 16) === "00";
+          if (changed || hourStart) emit(i, changed);
+          lastStatus = s;
+        }
+      } else {
+        const s = d.assessAt(idx).status;
+        emit(idx, s !== lastStatus);
+        lastStatus = s;
+      }
+      last = idx;
+    },
+  };
+}
