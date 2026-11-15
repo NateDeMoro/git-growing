@@ -1,4 +1,4 @@
-# W4 2D UI index
+# Spray or Wait index
 
 | File | Description | Open when |
 |---|---|---|
@@ -11,3 +11,9 @@
 | src/lib/stationFrame.ts | AZMet reading -> single-layer frame | station card |
 | src/lib/forecast.ts | W5: frames from hours, windows, next GO, early warning, wobble | /api/now, /api/forecast, forecast UI |
 | src/components/DemoPanel.tsx | Global hotkeys + hidden panel | changing keys |
+| src/lib/engine/assess.ts | Pure risk engine: status, reasons, droplet recommendation | changing a rule or cutoff (cutoffs live in thresholds.ts) |
+| src/lib/derive.ts | Hourly model record -> SceneFrame (5/30 ft tower, layers) | tower values look wrong |
+| scripts/build-sim.ts, public/sim/week.json | Deterministic sim week with Beats A-F | changing beats; rerun `npm run build-sim` |
+| src/lib/data/ | Open-Meteo, NWS, AZMet adapters + snapshot fallback (5 s deadline) | API or offline issues |
+| src/components/scene/ | MapLibre + deck.gl 3D farm (W7) | 3D bugs; worker copy in public/ |
+| README.md | Run steps, sources, what is simulated, demo script | presenting |
