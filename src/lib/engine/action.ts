@@ -58,12 +58,12 @@ export function cautionAction({ assessment: a, frame, product, nextSafeStart, ea
   }
   const rec = a.recommendedDroplet;
   const conds: string[] = [];
-  const add = (c: string) => { if (!conds.includes(c)) conds.push(c); };
+  const add = (c: string, first = false) => { if (!conds.includes(c)) first ? conds.unshift(c) : conds.push(c); }; // nozzle conditions go first so the 2-condition cut never drops them
   for (const r of rs) {
     switch (r.ruleId) {
-      case "deltaT": add(frame && frame.derived.deltaTC < 5 ? "you use Coarse (C) or coarser nozzles, since humid air keeps droplets airborne" : "you use only Very Coarse (VC) or coarser nozzles"); break;
+      case "deltaT": add(frame && frame.derived.deltaTC < 5 ? "you use Coarse (C) or coarser nozzles, since humid air keeps droplets airborne" : "you use only Very Coarse (VC) or coarser nozzles", true); break;
       case "windHigh": add(`you watch the wind and stop if it reaches ${product.labelWindMaxMph} mph`); break;
-      case "timingHint": add("you finish the block you're on and don't start a new one"); break;
+      case "timingHint": add("you don't start a new block and you finish the one you're on"); break;
       case "rainChance": add("the label's rainfast time is shorter than the time until rain"); break;
       case "pressure": {
         const h = earlyWarning?.hours;
@@ -71,12 +71,13 @@ export function cautionAction({ assessment: a, frame, product, nextSafeStart, ea
         break;
       }
       case "volatilityForecast": add("you finish well before tonight's inversion"); break;
-      case "speedShear": case "dirShear": add("you use coarser droplets and watch the wind at 30 ft"); break;
+      case "speedShear": case "dirShear": add("you use coarser droplets and watch the wind at 30 ft", true); break;
       default: add("you watch conditions closely");
     }
   }
-  let line = `OK to spray if: ${conds.slice(0, 2).join("; ")}.`;
-  if (rec && !conds.some((c) => /nozzle|droplet/.test(c))) line += ` Use ${dropletInfo(rec).name} (${rec}) or coarser droplets.`;
+  const shown = conds.slice(0, 2);
+  let line = `OK to spray if: ${shown.join("; ")}.`;
+  if (rec && !shown.some((c) => /nozzle|droplet/.test(c))) line += ` Use ${dropletInfo(rec).name} (${rec}) or coarser droplets.`;
   return { kind: "care", line };
 }
 

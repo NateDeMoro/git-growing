@@ -65,7 +65,12 @@ describe("CAUTION kind and line", () => {
   });
   it("two care conditions are joined, pressure uses early-warning hours", () => {
     const r = cautionAction({ assessment: mk("pressure", "timingHint", "rainChance"), product, earlyWarning: { at: "", status: "STOP", reason: "", hours: 2 } });
-    expect(r.line).toBe("OK to spray if: you finish within 2 hours, before the storm; you finish the block you're on and don't start a new one. Use Very Coarse (VC) or coarser droplets.");
+    expect(r.line).toBe("OK to spray if: you finish within 2 hours, before the storm; you don't start a new block and you finish the one you're on. Use Very Coarse (VC) or coarser droplets.");
+  });
+  it("deltaT nozzle condition is never cut by the two-condition limit", () => {
+    const r = cautionAction({ assessment: mk("windHigh", "pressure", "deltaT"), product });
+    expect(r.kind).toBe("care");
+    expect(r.line).toMatch(/Very Coarse \(VC\)/);
   });
   it("a real CAUTION frame gives a non-empty OK/Wait line", () => {
     const idx = frames.findIndex((f) => assess(f, product).status === "CAUTION");
