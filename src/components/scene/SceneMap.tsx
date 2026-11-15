@@ -96,6 +96,8 @@ export default function SceneMap(props: Scene3DProps) {
   const focusId = props.focusedBlockId ?? focusLocal;
   const spraying = props.spraying ?? spray ?? uiMode === "sim";
 
+  // Intentional: mutable per-frame scene state shared with the render loop; refreshed each render (behavior unchanged).
+  /* eslint-disable react-hooks/refs */
   const S = useRef<ReturnType<typeof initState> | null>(null);
   if (!S.current) S.current = initState(frame.layers, focusId, props, spraying);
   const s = S.current;
@@ -108,6 +110,7 @@ export default function SceneMap(props: Scene3DProps) {
     if (m) { s.orbit = false; fly(m, "block", id); }
   }, [props, s]);
   s.onFocus = onFocus;
+  /* eslint-enable react-hooks/refs */
 
   // tile source: local first, live Esri fallback
   useEffect(() => {
@@ -163,6 +166,7 @@ export default function SceneMap(props: Scene3DProps) {
   );
 
   // controls
+  /* eslint-disable react-hooks/immutability -- s is a mutable ref-backed state object by design */
   useEffect(() => {
     if (!props.controlsRef) return;
     props.controlsRef.current = {
@@ -171,6 +175,7 @@ export default function SceneMap(props: Scene3DProps) {
       preset: (p) => { const m = mapRef.current?.getMap(); if (m) { s.orbit = p === "overview"; fly(m, p); } },
     };
   }, [props.controlsRef, s]);
+  /* eslint-enable react-hooks/immutability */
 
   useEffect(() => {
     const m = mapRef.current?.getMap();
@@ -186,19 +191,34 @@ export default function SceneMap(props: Scene3DProps) {
     if (!m || !m.getLayer("esri")) return;
     const day = Math.min(1, Math.max(0, (frame.sun.elevationDeg + 8) / 20));
     const b = (0.22 + 0.4 * day) * (1 - 0.45 * stormLevel);
-    m.setPaintProperty("esri", "raster-brightness-max", b);
-    m.setPaintProperty("esri", "raster-hue-rotate", day < 0.5 ? 12 : 0);
+    for (const id of ["esri-live", "esri"]) {
+      if (!m.getLayer(id)) continue;
+      m.setPaintProperty(id, "raster-brightness-max", b);
+      m.setPaintProperty(id, "raster-hue-rotate", day < 0.5 ? 12 : 0);
+    }
   }, [frame.sun.elevationDeg, stormLevel, tileUrl]);
 
-  const style = useMemo<StyleSpecification | null>(() => tileUrl ? ({
-    version: 8,
-    sources: { esri: { type: "raster", tiles: [tileUrl], tileSize: 256, maxzoom: 17, attribution: "Esri, Maxar, Earthstar Geographics" } },
-    layers: [
-      { id: "bg", type: "background", paint: { "background-color": "#0a0f1a" } },
-      { id: "esri", type: "raster", source: "esri", paint: { "raster-brightness-max": 0.5, "raster-saturation": -0.4, "raster-contrast": 0.1 } },
-    ],
-  } as StyleSpecification) : null, [tileUrl]);
+  const style = useMemo<StyleSpecification | null>(() => {
+    if (!tileUrl) return null;
+    const ATTR = "Esri, Maxar, Earthstar Geographics";
+    const paint = { "raster-brightness-max": 0.5, "raster-saturation": -0.4, "raster-contrast": 0.1 };
+    const local = tileUrl === LOCAL;
+    // local tiles only exist for zoom 13-17; live Esri sits underneath for the fly-in below zoom 13
+    return {
+      version: 8,
+      sources: {
+        ...(local ? { "esri-live": { type: "raster", tiles: [ESRI], tileSize: 256, maxzoom: 17, attribution: ATTR } } : {}),
+        esri: { type: "raster", tiles: [tileUrl], tileSize: 256, maxzoom: 17, ...(local ? { minzoom: 13 } : {}), attribution: ATTR },
+      },
+      layers: [
+        { id: "bg", type: "background", paint: { "background-color": "#0a0f1a" } },
+        ...(local ? [{ id: "esri-live", type: "raster", source: "esri-live", paint }] : []),
+        { id: "esri", type: "raster", source: "esri", paint },
+      ],
+    } as StyleSpecification;
+  }, [tileUrl]);
 
+  const [range, setRange] = useState<[number, number]>([60, 70]);
   useAnimationLoop((dt, t) => {
     const ov = overlayRef.current;
     const map = mapRef.current?.getMap();
@@ -256,7 +276,6 @@ export default function SceneMap(props: Scene3DProps) {
     setRange((r) => (Math.abs(r[0] - ctx.tMin) > 0.2 || Math.abs(r[1] - ctx.tMax) > 0.2 ? [ctx.tMin, ctx.tMax] : r));
     ov.setProps({ layers: buildLayers(ctx) });
   });
-  const [range, setRange] = useState<[number, number]>([60, 70]);
 
   const onLoad = useCallback(() => {
     const m = mapRef.current?.getMap();

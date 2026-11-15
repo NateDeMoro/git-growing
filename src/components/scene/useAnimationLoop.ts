@@ -1,10 +1,10 @@
 "use client";
 // One rAF loop capped at ~30 updates/s, paused when the tab is hidden. Use when: driving particles and easing.
-import { useEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef } from "react";
 
 export function useAnimationLoop(cb: (dtS: number, tS: number) => void, fps = 30) {
   const ref = useRef(cb);
-  ref.current = cb;
+  useLayoutEffect(() => { ref.current = cb; });
   useEffect(() => {
     let raf = 0;
     let last = performance.now();
