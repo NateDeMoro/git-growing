@@ -128,6 +128,9 @@ The Readings card has its own scroll bar. Remove it: the card shows in full, com
 ### 13. Clickable beat markers
 The A-F beat markers under the Simulate scrubber become buttons. Clicking one jumps to that beat, the same as pressing 1-6. Each has a hover title with the beat's label.
 
+### 14. Bring back the single-station comparison, compactly
+This reverses part of item 6, by user decision. When a 5 ft-only ground station would give a different verdict from the 5 ft + 30 ft tower, show one line inside the verdict bar, e.g. "Ground station alone (5 ft): GO, blind to the 30 ft layer". The line is hidden when the two agree, so it costs no space most of the time. It uses the engine's existing single-station mode. Beat A is the demo example: the tower says STOP, the station alone says GO. Manual step 3 checks this line again.
+
 Not decided yet (confirm before the run):
 - Where the "Why these limits" panel goes. It was a requirement in the original goal; options are a link that opens it, or moving it to its own tab.
 - Whether the early-warning banner (e.g. "Storm arriving in 2 hours") stays on the Now tab. It stays on the Forecast tab either way.
