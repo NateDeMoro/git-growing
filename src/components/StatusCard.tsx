@@ -8,7 +8,7 @@ export default function StatusCard() {
   const { assessment, frame, product, forecast, earlyWarning } = useUiData();
   const s = assessment.status;
   const top = assessment.reasons[0];
-  const doThis = actionLine({ assessment, product, nextSafeStart: forecast.nextSafeWindow?.start, earlyWarning: forecast.earlyWarning });
+  const doThis = actionLine({ assessment, frame, product, nextSafeStart: forecast.nextSafeWindow?.start, earlyWarning: forecast.earlyWarning });
   return (
     <section className={`rounded-xl border-2 p-4 ${STATUS_BORDER[s]} ${STATUS_BG[s]} ${s === "STOP" ? "pulse-stop" : STATUS_GLOW[s]}`}>
       <div className="flex items-baseline justify-between gap-3">

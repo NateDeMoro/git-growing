@@ -15,7 +15,7 @@ const hourly = (idx: number) => frames.filter((_, i) => i >= idx && (i - idx) % 
 const lineAt = (idx: number) => {
   const a = assess(frames[idx], product);
   const fc = buildForecast(hourly(idx), product);
-  return { a, fc, line: actionLine({ assessment: a, product, nextSafeStart: fc.nextSafeWindow?.start, earlyWarning: fc.earlyWarning }) };
+  return { a, fc, line: actionLine({ assessment: a, frame: frames[idx], product, nextSafeStart: fc.nextSafeWindow?.start, earlyWarning: fc.earlyWarning }) };
 };
 
 describe("Do this line", () => {
@@ -23,13 +23,14 @@ describe("Do this line", () => {
     const { a, line } = lineAt(beatIdx("A"));
     expect(a.status).toBe("STOP");
     expect(line).toMatch(/^Don't spray/);
-    expect(line).toMatch(/inversion/i);
-    expect(line).toMatch(/next safe window starts \w{3} \d{1,2}:\d{2} (AM|PM)/);
+    expect(line).toMatch(/^Don't spray: inversion \(30 ft is 3\.0°F warmer\)\. Next safe window starts/);
+    expect(line).not.toMatch(/undefined|traps spray/);
+    expect(line).toMatch(/Next safe window starts \w{3} \d{1,2}:\d{2} (AM|PM)/);
   });
   it("Beat B landing (inversion breaking): still STOP, next safe window is soon", () => {
     const { a, line } = lineAt(beatIdx("B"));
     expect(a.status).toBe("STOP");
-    expect(line).toMatch(/^Don't spray.*next safe window starts/);
+    expect(line).toMatch(/^Don't spray: inversion.*Next safe window starts/);
   });
   it("Beat B peak (GO window open): spray now with a droplet class and a wind stop", () => {
     const peak = week.beats.find((b: any) => b.id === "B").peakFrameIndex;
@@ -41,7 +42,8 @@ describe("Do this line", () => {
   it("Beat F (STOP, storm): don't spray with the rain/gust cause", () => {
     const { a, line } = lineAt(beatIdx("F"));
     expect(a.status).toBe("STOP");
-    expect(line).toMatch(/^Don't spray/);
+    expect(line).toMatch(/^Don't spray: wind 25 mph, over the 10 mph limit\./);
+    expect(line).not.toMatch(/undefined/);
   });
   it("CAUTION recommends holding or a coarser class", () => {
     const a = { ...assess(frames[beatIdx("B")], product), status: "CAUTION" as const, recommendedDroplet: "C" as const };
