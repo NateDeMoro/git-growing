@@ -71,7 +71,6 @@ export function buildLayers(c: SceneCtx) {
   const pl = (id: string, b: PathBuf, n: number, pts: number, w: number) =>
     new PathLayer({ id, ...cs, data: binPath(b, n, pts) as never, getWidth: w, widthUnits: "pixels", _pathType: "open", parameters: noDepth, capRounded: false } as never);
   out.push(pl("wind", c.wind, c.windN, 5, 2));
-  if (c.driftN) out.push(pl("drift", c.drift, c.driftN, 5, 3));
   if (c.rainN) out.push(pl("rain", c.rain, c.rainN, 2, 1.2));
 
   // 11. cloud deck

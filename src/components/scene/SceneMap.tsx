@@ -8,8 +8,6 @@ import * as maplibregl from "maplibre-gl";
 import type { StyleSpecification } from "maplibre-gl";
 import type { Layer } from "@/lib/contract";
 import { SITE } from "@/lib/site";
-import { lidHeightFt } from "@/lib/scene/lid";
-import { driftBehavior } from "@/lib/scene/drift";
 import { easeLayers, EASE_MS } from "@/lib/scene/ease";
 import { treeGrid } from "@/lib/scene/trees";
 import { centroid, toLocal } from "@/lib/scene/geometry";
@@ -18,7 +16,7 @@ import Overlay from "./Overlay";
 import { fly, SW_ARIZONA, FARM_CENTER } from "./camera";
 import { registerUiCallbacks, uiActions } from "@/lib/uiStore";
 import { useAnimationLoop } from "./useAnimationLoop";
-import { DriftSim, RainSim, WindSim, WIND_PER_LAYER } from "./sim";
+import { RainSim, WindSim, WIND_PER_LAYER } from "./sim";
 import { buildLayers, BLOCKS, FB } from "./layers";
 import type { SceneCtx } from "./layers/types";
 
@@ -60,7 +58,6 @@ function getTrees() {
 function initState(layers: Layer[], focusId: string, props: Scene3DProps) {
   return {
     wind: new WindSim(layers.length),
-    drift: new DriftSim(),
     rain: new RainSim(),
     shown: layers,
     from: layers,
@@ -121,10 +118,9 @@ export default function SceneMap(props: Scene3DProps) {
     s.easeT0 = performance.now();
   }, [frame, s]);
 
-  // focus change: drift source
+  // focus change
   useEffect(() => {
     s.focus = focusId;
-    s.drift.setTrees(getTrees().byBlock[focusId] ?? new Float32Array(0));
     s.zoomed = false;
   }, [focusId, s]);
 
@@ -245,10 +241,7 @@ export default function SceneMap(props: Scene3DProps) {
     const gustPulse = 0.5 + 0.5 * Math.sin(t * 1.7);
     const base = upper?.windMph ?? 1;
     const gustLen = 1 + Math.min(2, Math.max(0, fr.weather.gustMph - base) / Math.max(base, 3)) * gustPulse;
-    const lidFt = lidHeightFt({ layers, derived: fr.derived });
-    const behavior = driftBehavior(fr, p.assessment);
     s.wind.update(dt, layers, 1.1 * gustLen);
-    s.drift.update(dt, layers, behavior, true, 0.9 * (behavior.regime === "storm" ? 1.8 : 1));
     s.rain.update(dt, fr.weather.rainInHr, upper);
     // orbit
     s.idleSince += dt;
@@ -258,9 +251,9 @@ export default function SceneMap(props: Scene3DProps) {
     const pad = Math.max(0, 2 - (tMax - tMin)) / 2;
     const ctx: SceneCtx = {
       frame: fr, assessment: p.assessment, layers, ver: s.ver, tSec: t, focusId: s.focus, flat: s.flat,
-      origin: [ORIGIN.lon, ORIGIN.lat], lidFt, tMin: tMin - 1 - pad, tMax: tMax + 1 + pad,
-      trees: getTrees().all, behavior,
-      wind: s.wind.buf, drift: s.drift.buf, rain: s.rain.buf, driftN: s.drift.active, rainN: s.rain.active, windN: Math.min(layers.length, s.wind.layerCount) * WIND_PER_LAYER,
+      origin: [ORIGIN.lon, ORIGIN.lat], tMin: tMin - 1 - pad, tMax: tMax + 1 + pad,
+      trees: getTrees().all,
+      wind: s.wind.buf, rain: s.rain.buf, rainN: s.rain.active, windN: Math.min(layers.length, s.wind.layerCount) * WIND_PER_LAYER,
       gustLen, stormLevel, onFocus: s.onFocus,
     };
     ov.setProps({ layers: buildLayers(ctx) });

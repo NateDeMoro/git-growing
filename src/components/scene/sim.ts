@@ -1,15 +1,13 @@
 // Particle simulation on preallocated typed arrays (positions in local metres from the tower).
-// Use when: updating wind, drift and rain particles each animation tick without allocating.
+// Use when: updating wind and rain particles each animation tick without allocating.
 import type { Layer } from "@/lib/contract";
 import { windVelocity } from "@/lib/scene/wind";
 import { advectOne, type Box } from "@/lib/scene/advect";
 import { sceneElevationM } from "@/lib/scene/geometry";
-import type { DriftBehavior } from "@/lib/scene/drift";
 
 export const SPEED_SCALE = 15; // visual speed-up of real wind so motion reads at farm scale
 export const TRAIL = 5;
 export const WIND_PER_LAYER = 250;
-export const DRIFT_N = 700;
 export const RAIN_MAX = 1400;
 
 function rng(seed: number) {
@@ -80,85 +78,6 @@ export class WindSim {
           buf.color[c] = col[0]; buf.color[c + 1] = col[1]; buf.color[c + 2] = col[2];
           buf.color[c + 3] = Math.round(aMax * (1 - t / TRAIL));
         }
-      }
-    }
-  }
-}
-
-export class DriftSim {
-  head = new Float32Array(DRIFT_N * 3);
-  age = new Float32Array(DRIFT_N);
-  life = new Float32Array(DRIFT_N);
-  lat = new Float32Array(DRIFT_N);
-  zf = new Float32Array(DRIFT_N);
-  rr = new Float32Array(DRIFT_N);
-  buf = makeBuf(DRIFT_N, TRAIL);
-  active = 0;
-  r = rng(23);
-  trees: Float32Array = new Float32Array(0); // local x,y pairs of the focused block
-  constructor() {
-    for (let i = 0; i < DRIFT_N; i++) {
-      this.rr[i] = this.r();
-      this.zf[i] = 0.6 + 0.4 * this.r();
-      this.life[i] = 1;
-      this.age[i] = this.r() * 10; // staggered
-      this.lat[i] = this.r() * 2 - 1;
-    }
-  }
-  setTrees(t: Float32Array) {
-    this.trees = t;
-    for (let i = 0; i < DRIFT_N; i++) this.spawn(i, true);
-  }
-  spawn(i: number, stagger = false) {
-    const nT = this.trees.length / 2;
-    if (nT > 0) {
-      const k = Math.floor(this.r() * nT);
-      this.head[i * 3] = this.trees[k * 2];
-      this.head[i * 3 + 1] = this.trees[k * 2 + 1];
-    }
-    this.head[i * 3 + 2] = 2 + this.r() * 8;
-    this.age[i] = stagger ? -this.r() * 8 : 0;
-    this.lat[i] = this.r() * 2 - 1;
-    this.zf[i] = 0.6 + 0.4 * this.r();
-  }
-  update(dt: number, layers: Layer[], b: DriftBehavior, on: boolean, tauS: number) {
-    this.active = on ? DRIFT_N : 0;
-    if (!on || layers.length === 0) return;
-    const { head, buf } = this;
-    const ceilM = b.ceilingFt === null ? Infinity : sceneElevationM(b.ceilingFt);
-    for (let i = 0; i < DRIFT_N; i++) {
-      this.age[i] += dt;
-      const a = this.age[i];
-      if (a < 0) { for (let t = 0; t < TRAIL; t++) buf.color[(i * TRAIL + t) * 4 + 3] = 0; continue; }
-      const hFt = head[i * 3 + 2] / (0.3048 * 10);
-      let li = 0;
-      for (let k = 0; k < layers.length; k++) if (Math.abs(layers[k].heightFt - hFt) < Math.abs(layers[li].heightFt - hFt)) li = k;
-      const lay = layers[li];
-      const v = windVelocity(lay.windMph, lay.windDirDeg, SPEED_SCALE * (b.regime === "storm" ? 1.6 : 0.8));
-      const sp = Math.hypot(v.east, v.north) || 1;
-      const life = Math.min(20, Math.max(2.5, b.reachM / sp)) * (0.7 + 0.6 * this.rr[i]) / b.fadeSpeed;
-      if (a > life) { this.spawn(i); continue; }
-      const lat = this.lat[i] * b.spreadSideways * (b.regime === "inversion" ? 6 : 3);
-      const vx = v.east + (-v.north / sp) * lat * SPEED_SCALE * 0.3;
-      const vy = v.north + (v.east / sp) * lat * SPEED_SCALE * 0.3;
-      let vz = sceneElevationM(b.riseFtPerS) * (0.5 + this.rr[i]);
-      let z = head[i * 3 + 2] + vz * dt;
-      const zmax = ceilM * this.zf[i];
-      if (z > zmax) { z = zmax; vz = 0; }
-      head[i * 3] += vx * dt;
-      head[i * 3 + 1] += vy * dt;
-      head[i * 3 + 2] = z;
-      const fade = Math.pow(1 - a / life, 0.7) * Math.min(1, a * 4);
-      const hot = b.regime === "inversion" ? [255, 110, 70] : b.regime === "go" ? [250, 220, 130] : [255, 160, 70];
-      for (let t = 0; t < TRAIL; t++) {
-        const f = (t / (TRAIL - 1)) * tauS;
-        const o = (i * TRAIL + t) * 3;
-        buf.path[o] = head[i * 3] - vx * f;
-        buf.path[o + 1] = head[i * 3 + 1] - vy * f;
-        buf.path[o + 2] = Math.max(0, z - vz * f);
-        const c = (i * TRAIL + t) * 4;
-        buf.color[c] = hot[0]; buf.color[c + 1] = hot[1]; buf.color[c + 2] = hot[2];
-        buf.color[c + 3] = Math.round(235 * fade * (1 - t / TRAIL));
       }
     }
   }
