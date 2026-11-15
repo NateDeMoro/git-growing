@@ -146,14 +146,17 @@ function hash01(s: string): number {
 }
 
 /**
- * Small minute-seeded wobble on layer temps (+-0.2 F) and winds (+-0.3 mph) so the sensor looks alive.
+ * Minute-seeded common-mode wobble: one temp offset (+-0.2 F) and one wind offset (+-0.3 mph) applied to every layer,
+ * so inversion and speed shear are unchanged. Wind offset is 0 when the 5 ft or 30 ft wind is within 0.3 mph of 3 or 10 mph.
  * Deterministic per minute key, no Math.random. Use when: serving a live "now" frame.
  */
 export function wobbleFrame(frame: SceneFrame, minuteKey: string): SceneFrame {
-  const layers = frame.layers.map((l) => ({
-    ...l,
-    tempF: l.tempF + (hash01(`${minuteKey}|t|${l.heightFt}`) * 2 - 1) * 0.2,
-    windMph: Math.max(0, l.windMph + (hash01(`${minuteKey}|w|${l.heightFt}`) * 2 - 1) * 0.3),
-  }));
+  const dT = (hash01(`${minuteKey}|t`) * 2 - 1) * 0.2;
+  let dW = (hash01(`${minuteKey}|w`) * 2 - 1) * 0.3;
+  const nearCutoff = frame.layers.some(
+    (l) => (l.heightFt === 5 || l.heightFt === 30) && [3, 10].some((c) => Math.abs(l.windMph - c) <= 0.3),
+  );
+  if (nearCutoff) dW = 0;
+  const layers = frame.layers.map((l) => ({ ...l, tempF: l.tempF + dT, windMph: Math.max(0, l.windMph + dW) }));
   return { ...frame, layers, derived: summarize(layers, frame.derived.rhPct), drift: driftVector(layers) };
 }

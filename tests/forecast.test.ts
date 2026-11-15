@@ -31,6 +31,8 @@ describe("forecast", () => {
   it("wobble is deterministic per minute and small", () => {
     const a = wobbleFrame(base, "2026-11-15T10:01");
     expect(wobbleFrame(base, "2026-11-15T10:01")).toEqual(a);
+    expect(a.derived.inversionF).toBeCloseTo(base.derived.inversionF, 9);
+    expect(a.derived.speedShearMph).toBeCloseTo(base.derived.speedShearMph, 9);
     a.layers.forEach((l, i) => {
       expect(Math.abs(l.tempF - base.layers[i].tempF)).toBeLessThanOrEqual(0.2);
       expect(Math.abs(l.windMph - base.layers[i].windMph)).toBeLessThanOrEqual(0.3);
