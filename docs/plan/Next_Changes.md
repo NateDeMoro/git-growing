@@ -125,6 +125,9 @@ Remove the "Or:" second nozzle choice, the "Starting point: confirm with your no
 ### 12. No separate scroll bar on Readings
 The Readings card has its own scroll bar. Remove it: the card shows in full, compacted where needed so the right column fits at about 1900 x 1080. If anything still doesn't fit, the whole right column scrolls as one, never the card alone.
 
+### 13. Clickable beat markers
+The A-F beat markers under the Simulate scrubber become buttons. Clicking one jumps to that beat, the same as pressing 1-6. Each has a hover title with the beat's label.
+
 Not decided yet (confirm before the run):
 - Where the "Why these limits" panel goes. It was a requirement in the original goal; options are a link that opens it, or moving it to its own tab.
 - Whether the early-warning banner (e.g. "Storm arriving in 2 hours") stays on the Now tab. It stays on the Forecast tab either way.
