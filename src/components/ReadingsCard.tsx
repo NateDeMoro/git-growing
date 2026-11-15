@@ -39,7 +39,7 @@ export default function ReadingsCard() {
         <Col label="30 ft (upper)" temp={up.tempF} wind={up.windMph} dir={up.windDirDeg} />
       </div>
       <div className="mt-2 grid grid-cols-1 gap-x-5 sm:grid-cols-4">
-        <Stat k="Inversion (30 minus 5 ft)" v={`${d.inversionF.toFixed(1)}°F`} />
+        <Stat k="Inversion (30-5 ft)" v={`${d.inversionF.toFixed(1)}°F`} />
         <Stat k="Speed difference" v={`${d.speedShearMph.toFixed(1)} mph`} />
         <Stat k="Direction difference" v={`${d.dirShearDeg.toFixed(0)}°`} />
         <Stat k="Delta T" v={`${d.deltaTC.toFixed(1)}°C`} />
