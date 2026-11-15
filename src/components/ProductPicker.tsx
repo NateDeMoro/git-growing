@@ -10,7 +10,7 @@ export default function ProductPicker() {
       <span className="text-xs font-semibold uppercase tracking-widest text-muted">Product</span>
       <select
         value={productId}
-        onChange={(e) => setProductId(e.target.value)}
+        onChange={(e) => { setProductId(e.target.value); e.currentTarget.blur(); }}
         className="rounded-lg border border-line bg-panel2 px-3 py-1.5 text-base text-foreground"
         aria-label="Product"
       >
