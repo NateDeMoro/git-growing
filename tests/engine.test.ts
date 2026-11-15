@@ -7,7 +7,7 @@ import { dropletIndex } from "@/lib/droplets";
 import type { Product, SceneFrame } from "@/lib/contract";
 
 const lowVol: Product = { ...PRODUCTS[0], labelMinDroplet: "M", labelWindMaxMph: 10 };
-const highVol: Product = { ...PRODUCTS[1], labelMinDroplet: "M" };
+const highVol: Product = { ...PRODUCTS.find((p) => p.volatility === "high")!, labelMinDroplet: "M" };
 const MAX = 10;
 
 // Midday, calm-clean baseline: all rules GO.
