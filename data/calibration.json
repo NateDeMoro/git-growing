@@ -1,0 +1,18 @@
+{
+  "k": 1.348,
+  "medianExponent": 0.13,
+  "nightInvertedShare": 0.846,
+  "medianNightMaxInversionC": 2.5,
+  "nightsUsed": 1020,
+  "targetC": 2.5,
+  "fallback": false,
+  "fitPath": "yuma-2.5C",
+  "range": {
+    "start": "2024-01-01",
+    "end": "2026-11-01"
+  },
+  "site": {
+    "lat": 32.606718,
+    "lon": -114.636798
+  }
+}
