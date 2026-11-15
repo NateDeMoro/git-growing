@@ -5,49 +5,24 @@
 // 5-minute frames, playhead driven here at 0.25 / 1 / 6 sim-hours per second. Assessment runs client-side, memoized.
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import type { Assessment, Beat, ForecastResult, Product, SceneFrame, SimWeek, Status } from "@/lib/contract";
-import type { StationReading } from "@/lib/data/types";
 import { assess } from "@/lib/engine/assess";
 import { cachedAssess } from "@/lib/assessCache";
-import { buildForecast } from "@/lib/forecast";
+import { buildForecast, earlyWarningLine, summarizeForecast } from "@/lib/forecast";
 import { logStore } from "@/lib/log";
 import { productById } from "@/lib/products";
 import { FRAMES_PER_HOUR, createSimLogger, makeLogEntry } from "@/lib/simLogger";
-import { stationFrame } from "@/lib/stationFrame";
 import { getUiState, registerUiCallbacks, uiActions, useUiStore } from "@/lib/uiStore";
 import { useFrame } from "@/components/FrameProvider";
 
-const RANK: Record<Status, number> = { GO: 0, CAUTION: 1, STOP: 2 };
 const POLL_MS = 60_000;
-const HISTORY_STEP = 6; // downsample 5-minute frames to 30-minute chart points
-const HISTORY_POINTS = 48; // 24 h
-
-export interface HistoryPoint {
-  time: string;
-  lowerTempF: number;
-  upperTempF: number;
-  lowerWindMph: number;
-  upperWindMph: number;
-  inverted: boolean;
-  status: Status;
-}
-
-export interface AzmetCompare {
-  reading: StationReading;
-  assessment: Assessment; // single-station mode on the AZMet reading
-  cached: boolean;
-}
-
 export interface UiData {
   frame: SceneFrame;
   assessment: Assessment;
-  stationAssessment: Assessment | null; // our 5 ft data, single-station mode
-  azmet: AzmetCompare | null; // live mode only
   product: Product;
   productId: string;
   setProductId: (id: string) => void;
-  history: HistoryPoint[]; // last 24 h up to now, 30-minute points
   forecast: ForecastResult;
-  lookAhead: { text: string; status: Status } | null; // sim mode only
+  earlyWarning: { text: string; status: Status; reason: string } | null; // one source for Now and Forecast: forecast.earlyWarning
   cached: boolean; // live frame or AZMet came from a committed snapshot
   forecastFailed: boolean; // /api/forecast failed: forecast shows the sim week instead
   notice: string | null; // brief message (e.g. Live unavailable, back in Simulate)
@@ -58,30 +33,6 @@ const Ctx = createContext<UiData | null>(null);
 
 const EMPTY_FORECAST: ForecastResult = { frames: [], windows: [], nextSafeWindow: null, earlyWarning: null, source: "loading", cached: false };
 
-function pt(f: SceneFrame): Pick<HistoryPoint, "lowerTempF" | "upperTempF" | "lowerWindMph" | "upperWindMph"> {
-  const lo = f.layers.find((l) => l.heightFt === 5)!;
-  const up = f.layers.find((l) => l.heightFt === 30)!;
-  return { lowerTempF: lo.tempF, upperTempF: up.tempF, lowerWindMph: lo.windMph, upperWindMph: up.windMph };
-}
-
-/** First of the next 3 sim-hours whose status is worse than now. Use when: building the early-warning text. */
-function computeLookAhead(frames: SceneFrame[], idx: number, now: Status, assessAt: (i: number) => Assessment): UiData["lookAhead"] {
-  for (let h = 1; h <= 3; h++) {
-    const j = idx + h * FRAMES_PER_HOUR;
-    if (j >= frames.length) break;
-    const later = assessAt(j);
-    if (RANK[later.status] > RANK[now]) {
-      const lf = frames[j];
-      const storm = lf.weather.rainInHr > 0 || lf.weather.pressureTrendHpaPerHr <= -2;
-      return {
-        status: later.status,
-        text: `${storm ? "Storm arriving" : "Conditions worsen"} in ${h} hour${h > 1 ? "s" : ""}: ${later.status}. ${later.reasons[0]?.text ?? ""}`,
-      };
-    }
-  }
-  return null;
-}
-
 export function useUiData(): UiData {
   const v = useContext(Ctx);
   if (!v) throw new Error("useUiData must be used inside UiDataProvider");
@@ -90,7 +41,6 @@ export function useUiData(): UiData {
 
 interface LiveRes { frame: SceneFrame; cached: boolean; seq: number; at: number }
 interface ForecastRaw { frames: SceneFrame[]; nowIndex: number; nws: ForecastResult["nws"]; source: string; cached: boolean }
-interface StationRes { reading: StationReading; cached: boolean }
 
 export function UiDataProvider({ children }: { children: ReactNode }) {
   const { productId, setProductId } = useFrame();
@@ -101,7 +51,6 @@ export function UiDataProvider({ children }: { children: ReactNode }) {
 
   const [week, setWeek] = useState<SimWeek | null>(null);
   const [liveRes, setLiveRes] = useState<LiveRes | null>(null);
-  const [stationRes, setStationRes] = useState<StationRes | null>(null);
   const [fcRaw, setFcRaw] = useState<ForecastRaw | null>(null);
   const [wantForecast, setWantForecast] = useState(false);
   const [fcFailed, setFcFailed] = useState(false);
@@ -132,7 +81,6 @@ export function UiDataProvider({ children }: { children: ReactNode }) {
       if (!r.ok) return false;
       const j = await r.json();
       setLiveRes({ frame: j.frame as SceneFrame, cached: !!j.cached, seq: ++seq.current, at: Date.now() });
-      fetch("/api/station", { signal: AbortSignal.timeout(5000) }).then((s) => s.json()).then((s) => setStationRes({ reading: s.data, cached: s.source === "snapshot" })).catch(() => {});
       return true;
     } catch {
       return false;
@@ -242,11 +190,6 @@ export function UiDataProvider({ children }: { children: ReactNode }) {
     if (!frame) return null;
     return mode === "live" && liveRes?.frame === frame ? assess(frame, product, "full") : cachedAssess(frame, product, "full", frame.time);
   }, [frame, mode, liveRes, product]);
-  const stationAssessment = useMemo(() => {
-    if (!frame) return null;
-    return mode === "live" && liveRes?.frame === frame ? assess(frame, product, "singleStation") : cachedAssess(frame, product, "singleStation", frame.time);
-  }, [frame, mode, liveRes, product]);
-
   // Live logging: once per poll, plus on status change (e.g. product switch).
   const liveLog = useRef<{ seq: number; status: Status } | null>(null);
   useEffect(() => {
@@ -257,62 +200,36 @@ export function UiDataProvider({ children }: { children: ReactNode }) {
     liveLog.current = { seq: liveRes.seq, status: assessment.status };
   }, [mode, liveRes, assessment, frame, productId]);
 
-  const azmet = useMemo<AzmetCompare | null>(() => {
-    if (mode !== "live" || !stationRes || !frame) return null;
-    return { reading: stationRes.reading, cached: stationRes.cached, assessment: assess(stationFrame(stationRes.reading, frame), product, "singleStation") };
-  }, [mode, stationRes, frame, product]);
-
-  const hourBucket = Math.floor(idx / FRAMES_PER_HOUR);
   const forecast = useMemo<ForecastResult>(() => {
+    if (mode === "sim" && frames) {
+      // Hourly samples of the sim week starting at the playhead, so hour 0 is exactly the current verdict.
+      const hourly: SceneFrame[] = [];
+      for (let i = idx; i < frames.length && hourly.length < 168; i += FRAMES_PER_HOUR) hourly.push({ ...frames[i], mode: "forecast" });
+      return summarizeForecast(hourly, hourly.map((f, k) => assessAt(idx + k * FRAMES_PER_HOUR)), { source: "simulated", cached: true });
+    }
     if (fcRaw) return buildForecast(fcRaw.frames, product, { nowIndex: fcRaw.nowIndex, nws: fcRaw.nws, source: fcRaw.source, cached: fcRaw.cached });
     if (fcFailed && frames) {
-      // Fallback: hourly samples of the sim week from the current playhead, labelled as simulated.
       const hourly: SceneFrame[] = [];
-      for (let i = hourBucket * FRAMES_PER_HOUR; i < frames.length && hourly.length < 168; i += FRAMES_PER_HOUR) hourly.push({ ...frames[i], mode: "forecast" });
+      for (let i = idx; i < frames.length && hourly.length < 168; i += FRAMES_PER_HOUR) hourly.push({ ...frames[i], mode: "forecast" });
       return buildForecast(hourly, product, { source: "simulated", cached: true });
     }
     return EMPTY_FORECAST;
-  }, [fcRaw, fcFailed, frames, hourBucket, product]);
+  }, [mode, fcRaw, fcFailed, frames, idx, product, assessAt]);
 
-  // 24 h history, 30-minute points anchored to the frame grid so the line does not jitter.
-  const bucket = Math.floor(idx / HISTORY_STEP);
-  const history = useMemo<HistoryPoint[]>(() => {
-    if (mode === "sim" && frames) {
-      const out: HistoryPoint[] = [];
-      for (let k = HISTORY_POINTS - 1; k >= 0; k--) {
-        const i = (bucket - k) * HISTORY_STEP;
-        if (i < 0) continue;
-        out.push({ time: frames[i].time, ...pt(frames[i]), inverted: frames[i].derived.inversionF > 0, status: assessAt(i).status });
-      }
-      return out;
-    }
-    if (fcRaw) {
-      const out: HistoryPoint[] = [];
-      for (let i = Math.max(0, fcRaw.nowIndex - 23); i <= fcRaw.nowIndex; i++) {
-        const f = fcRaw.frames[i];
-        out.push({ time: f.time, ...pt(f), inverted: f.derived.inversionF > 0, status: assess(f, product, "full").status });
-      }
-      return out;
-    }
-    return frame ? [{ time: frame.time, ...pt(frame), inverted: frame.derived.inversionF > 0, status: assessment!.status }] : [];
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mode, frames, bucket, assessAt, fcRaw, product]);
-
-  // Look-ahead: first of the next 3 sim-hours whose status is worse than now.
-  const nowStatus = assessment?.status;
-  const lookAhead = useMemo(
-    () => (mode === "sim" && frames && nowStatus ? computeLookAhead(frames, idx, nowStatus, assessAt) : null),
-    [mode, frames, idx, nowStatus, assessAt],
+  // One early-warning source for Now and Forecast: forecast.earlyWarning.
+  const earlyWarning = useMemo<UiData["earlyWarning"]>(
+    () => (forecast.earlyWarning ? { status: forecast.earlyWarning.status, reason: forecast.earlyWarning.reason, text: earlyWarningLine(forecast.earlyWarning) } : null),
+    [forecast],
   );
 
-  const cached = mode === "live" && ((liveRes?.cached ?? false) || (stationRes?.cached ?? false));
+  const cached = mode === "live" && ((liveRes?.cached ?? false));
 
   const value = useMemo<UiData | null>(
     () =>
       frame && assessment
-        ? { frame, assessment, stationAssessment, azmet, product, productId, setProductId, history, forecast, lookAhead, cached, forecastFailed: fcFailed, notice, loadForecast }
+        ? { frame, assessment, product, productId, setProductId, forecast, earlyWarning, cached, forecastFailed: fcFailed, notice, loadForecast }
         : null,
-    [frame, assessment, stationAssessment, azmet, product, productId, setProductId, history, forecast, lookAhead, cached, fcFailed, notice, loadForecast],
+    [frame, assessment, product, productId, setProductId, forecast, earlyWarning, cached, fcFailed, notice, loadForecast],
   );
 
   if (!value) {

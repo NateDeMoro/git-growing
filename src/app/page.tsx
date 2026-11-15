@@ -16,7 +16,7 @@ function Shell() {
   const { cached, forecast, notice } = useUiData();
   const showCached = tab === "forecast" ? forecast.cached : cached;
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex h-screen flex-col">
       <header className="flex flex-wrap items-center justify-between gap-2 border-b border-line px-6 py-3">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-foreground">
@@ -38,7 +38,7 @@ function Shell() {
           ))}
         </nav>
       </header>
-      <main className="flex min-h-0 flex-1 flex-col">
+      <main className="flex min-h-0 flex-1 flex-col overflow-y-auto">
         {tab === "now" && <NowPanel />}
         {tab === "forecast" && <ForecastPanel />}
         {tab === "log" && <LogTable />}

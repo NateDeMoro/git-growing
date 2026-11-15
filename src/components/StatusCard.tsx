@@ -1,25 +1,32 @@
 "use client";
-// Big GO / CAUTION / STOP card with the top reason. Use when: the headline verdict is needed.
+// Verdict bar: GO / CAUTION / STOP, top reason, "Do this" line and the one early-warning line. Use when: the headline verdict is needed.
+import { actionLine } from "@/lib/engine/action";
 import { useUiData } from "./ui/UiData";
 import { STATUS_BG, STATUS_BORDER, STATUS_GLOW, STATUS_TEXT, dayClock } from "./ui/shared";
 
 export default function StatusCard() {
-  const { assessment, frame, product } = useUiData();
+  const { assessment, frame, product, forecast, earlyWarning } = useUiData();
   const s = assessment.status;
   const top = assessment.reasons[0];
+  const doThis = actionLine({ assessment, product, nextSafeStart: forecast.nextSafeWindow?.start, earlyWarning: forecast.earlyWarning });
   return (
-    <section className={`rounded-xl border-2 p-5 ${STATUS_BORDER[s]} ${STATUS_BG[s]} ${s === "STOP" ? "pulse-stop" : STATUS_GLOW[s]}`}>
+    <section className={`rounded-xl border-2 p-4 ${STATUS_BORDER[s]} ${STATUS_BG[s]} ${s === "STOP" ? "pulse-stop" : STATUS_GLOW[s]}`}>
       <div className="flex items-baseline justify-between gap-3">
-        <div className={`text-6xl font-black tracking-tight ${STATUS_TEXT[s]}`} aria-live="polite">
-          {s === "GO" ? "GO" : s}
-        </div>
+        <div className={`text-5xl font-black tracking-tight ${STATUS_TEXT[s]}`} aria-live="polite">{s}</div>
         <div className="text-right text-xs text-muted">
           <div className="font-mono">{dayClock(frame.time)}</div>
-          <div className="uppercase tracking-widest">{frame.mode}</div>
+          <div className="uppercase tracking-widest">{frame.mode} · {product.name}</div>
         </div>
       </div>
-      <p className="mt-2 text-lg leading-snug text-foreground">{top?.text}</p>
-      <p className="mt-1 text-xs text-muted">Product: {product.name}</p>
+      <p className="mt-2 text-base leading-snug text-foreground">{top?.text}</p>
+      <p className="mt-2 rounded-lg border border-line/70 bg-panel/60 px-3 py-2 text-base font-semibold leading-snug text-foreground" data-testid="do-this">
+        <span className="mr-2 text-xs font-bold uppercase tracking-widest text-muted">Do this</span>{doThis}
+      </p>
+      {earlyWarning && (
+        <p className={`mt-2 text-sm font-semibold ${STATUS_TEXT[earlyWarning.status]}`} role="alert" data-testid="early-warning">
+          {earlyWarning.text}
+        </p>
+      )}
     </section>
   );
 }

@@ -169,7 +169,7 @@ export interface ForecastResult {
   frames: SceneFrame[];
   windows: ForecastWindow[];
   nextSafeWindow: ForecastWindow | null; // GO, >= 2 hours
-  earlyWarning: { at: string; status: Status; reason: string } | null; // within 6 h
+  earlyWarning: { at: string; status: Status; reason: string; hours?: number; storm?: boolean } | null; // within 6 h
   nws?: { time: string; mixingHeightFt?: number; transportWindMph?: number }[];
   source: string;
   cached: boolean;

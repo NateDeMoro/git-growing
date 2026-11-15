@@ -89,10 +89,18 @@ export function earlyWarning(
 ): ForecastResult["earlyWarning"] {
   for (let i = 1; i <= horizon && i < frames.length; i++) {
     if (RANK[assessments[i].status] > RANK[assessments[0].status]) {
-      return { at: frames[i].time, status: assessments[i].status, reason: assessments[i].reasons[0]?.text ?? "Conditions worsen" };
+      const w = frames[i].weather;
+      const storm = w.rainInHr > 0 || w.pressureTrendHpaPerHr <= -2;
+      return { at: frames[i].time, status: assessments[i].status, reason: assessments[i].reasons[0]?.text ?? "Conditions worsen", hours: i, storm };
     }
   }
   return null;
+}
+
+/** One-line early-warning text, e.g. "Storm arriving in 2 hours: STOP". Use when: any tab shows the early warning (single wording). */
+export function earlyWarningLine(ew: NonNullable<ForecastResult["earlyWarning"]>): string {
+  const h = ew.hours ?? 1;
+  return `${ew.storm ? "Storm arriving" : "Conditions worsen"} in ${h} hour${h > 1 ? "s" : ""}: ${ew.status}`;
 }
 
 /** NWS hours -> overlay entries aligned to frame times (context only, never an assess input). */

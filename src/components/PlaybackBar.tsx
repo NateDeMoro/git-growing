@@ -16,7 +16,7 @@ export default function PlaybackBar() {
   const last = Math.max(1, frameCount - 1);
   const btn = "rounded-md border px-3 py-1.5 text-sm font-semibold";
   return (
-    <div className="flex flex-wrap items-center gap-3 border-t border-line bg-panel px-4 py-3">
+    <div className="flex flex-wrap items-center gap-3 border-t border-line bg-panel px-4 py-1.5">
       <div className="flex overflow-hidden rounded-md border border-line" role="group" aria-label="Mode">
         {(["live", "sim"] as const).map((m) => (
           <button key={m} onClick={() => uiActions.setMode(m)} className={`px-3 py-1.5 text-sm font-semibold ${mode === m ? "bg-go/20 text-go" : "text-muted hover:text-foreground"}`}>
@@ -47,7 +47,7 @@ export default function PlaybackBar() {
           className="w-full accent-green-400"
           aria-label="Sim time"
         />
-        <div className="pointer-events-none relative h-4">
+        <div className="pointer-events-none relative h-7">
           {beats.map((b) => (
             <span key={b.id} className="absolute top-0 -translate-x-1/2 text-[11px] font-bold text-caution" style={{ left: `${(b.frameIndex / last) * 100}%` }} title={b.label}>
               |<br />{b.id}
