@@ -24,7 +24,7 @@ async function main() {
   console.log(`  ${om.length} hours, ${om[0].time} .. ${om.at(-1)!.time}`);
 
   try {
-    const nws = await fetchNwsGridpoint(lat, lon, 20000);
+    const nws = await fetchNwsGridpoint(lat, lon, 20000, true);
     write("nws-gridpoint", ["NWS gridpoint"], nws);
     console.log(`  ${nws.length} hours`);
   } catch (e) {

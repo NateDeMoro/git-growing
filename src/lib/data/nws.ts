@@ -40,10 +40,12 @@ async function once(lat: number, lon: number, timeoutMs: number): Promise<NwsHou
   }));
 }
 
-export async function fetchNwsGridpoint(lat: number, lon: number, timeoutMs = 4000): Promise<NwsHour[]> {
+/** Per-request timeout. `retry` (scripts only) retries once; routes pass false to stay under the deadline. */
+export async function fetchNwsGridpoint(lat: number, lon: number, timeoutMs = 2500, retry = false): Promise<NwsHour[]> {
   try {
     return await once(lat, lon, timeoutMs);
-  } catch {
+  } catch (e) {
+    if (!retry) throw e;
     return await once(lat, lon, timeoutMs);
   }
 }

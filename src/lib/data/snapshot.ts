@@ -15,7 +15,9 @@ export const SNAPSHOTS = {
   azmet: azSnap as unknown as SnapshotFile<StationReading[]>,
 };
 
-/** Try live (4 s timeout inside `live`), else snapshot. Reports which was used. Use when: wrapping any source. */
+const DEADLINE_MS = 5000; // total live budget so no route nears Vercel's 10 s limit
+
+/** Try live (5 s total timeout inside `live`), else snapshot. Reports which was used. Use when: wrapping any source. */
 export async function liveOrSnapshot<T>(
   live: () => Promise<T>,
   snap: SnapshotFile<T>,
@@ -24,7 +26,11 @@ export async function liveOrSnapshot<T>(
 ): Promise<ApiEnvelope<T>> {
   if (!offline) {
     try {
-      return { data: await live(), dataTime: new Date().toISOString(), sources: liveSources, source: "live" };
+      const data = await Promise.race([
+        live(),
+        new Promise<never>((_, rej) => setTimeout(() => rej(new Error("deadline")), DEADLINE_MS)),
+      ]);
+      return { data, dataTime: new Date().toISOString(), sources: liveSources, source: "live" };
     } catch {
       /* fall through to snapshot */
     }
@@ -38,7 +44,7 @@ export const getForecast = (offline: boolean) =>
   liveOrSnapshot(() => fetchOpenMeteoForecast(lat, lon, 4000), SNAPSHOTS.openMeteo, offline, ["Open-Meteo"]);
 
 export const getNws = (offline: boolean) =>
-  liveOrSnapshot(() => fetchNwsGridpoint(lat, lon, 4000), SNAPSHOTS.nws, offline, ["NWS gridpoint"]);
+  liveOrSnapshot(() => fetchNwsGridpoint(lat, lon, 2500, false), SNAPSHOTS.nws, offline, ["NWS gridpoint"]);
 
 export async function getStation(offline: boolean): Promise<ApiEnvelope<StationReading>> {
   const env = await liveOrSnapshot(
