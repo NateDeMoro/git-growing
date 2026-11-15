@@ -1,29 +1,9 @@
 // Pesticide products for the picker. Use when: the user picks a product or the engine needs volatility/label limits.
-// STUB: W1 replaces PRODUCTS with data/products.json built from PubChem by scripts/fetch-products.ts.
+// Data lives in data/products.json, built from PubChem by scripts/fetch-products.ts (npm run fetch:products).
 import type { Product } from "./contract";
+import productsJson from "../../data/products.json";
 
-export const PRODUCTS: Product[] = [
-  {
-    id: "abamectin",
-    name: "Abamectin",
-    pubchemCid: 6918460,
-    vaporPressureMpa: 0.0000037,
-    volatility: "low",
-    labelWindMaxMph: 10,
-    labelMinDroplet: "VF",
-    note: "Label limits illustrative, check label",
-  },
-  {
-    id: "high-vol-example",
-    name: "High-volatility example (placeholder)",
-    vaporPressureMpa: 20,
-    volatility: "high",
-    labelWindMaxMph: 10,
-    labelMinDroplet: "M",
-    note: "Placeholder until W1 picks a real product over 10 mPa",
-    isHighVolatilityExample: true,
-  },
-];
+export const PRODUCTS: Product[] = productsJson as Product[];
 
 export const DEFAULT_PRODUCT_ID = PRODUCTS[0].id;
 

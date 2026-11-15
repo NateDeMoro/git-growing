@@ -1,0 +1,71 @@
+[
+  {
+    "id": "abamectin",
+    "name": "Abamectin",
+    "pubchemCid": 9920327,
+    "vaporPressureMpa": 0.000199983,
+    "volatility": "low",
+    "labelWindMaxMph": 10,
+    "labelMinDroplet": "M",
+    "note": "Citrus miticide. Label limits illustrative, check label."
+  },
+  {
+    "id": "imidacloprid",
+    "name": "Imidacloprid",
+    "pubchemCid": 86287518,
+    "vaporPressureMpa": 9e-7,
+    "volatility": "low",
+    "labelWindMaxMph": 10,
+    "labelMinDroplet": "M",
+    "note": "Systemic insecticide. Label limits illustrative, check label."
+  },
+  {
+    "id": "chlorpyrifos",
+    "name": "Chlorpyrifos",
+    "pubchemCid": 2730,
+    "vaporPressureMpa": 2.4931214000000006,
+    "volatility": "low",
+    "labelWindMaxMph": 10,
+    "labelMinDroplet": "M",
+    "note": "Organophosphate insecticide. Label limits illustrative, check label."
+  },
+  {
+    "id": "trifluralin",
+    "name": "Trifluralin",
+    "pubchemCid": 5569,
+    "vaporPressureMpa": 6.1061476,
+    "volatility": "moderate",
+    "labelWindMaxMph": 10,
+    "labelMinDroplet": "M",
+    "note": "Orchard-floor herbicide. Label limits illustrative, check label."
+  },
+  {
+    "id": "narrow-range-oil",
+    "name": "Narrow-range oil",
+    "vaporPressureMpa": 0.1,
+    "volatility": "low",
+    "labelWindMaxMph": 10,
+    "labelMinDroplet": "M",
+    "note": "Petroleum oil, no usable PubChem value; vapor pressure hand-entered as approximate (negligible volatility). Label limits illustrative, check label."
+  },
+  {
+    "id": "copper-hydroxide",
+    "name": "Copper hydroxide",
+    "vaporPressureMpa": 0.000001,
+    "volatility": "low",
+    "labelWindMaxMph": 10,
+    "labelMinDroplet": "M",
+    "note": "Inorganic fungicide, effectively non-volatile; value hand-entered. Label limits illustrative, check label."
+  },
+  {
+    "id": "24d-ehe",
+    "name": "2,4-D 2-ethylhexyl ester",
+    "pubchemCid": 61286,
+    "vaporPressureMpa": 47.9,
+    "volatility": "high",
+    "labelWindMaxMph": 10,
+    "labelMinDroplet": "C",
+    "note": "High-volatility example (ester herbicide near orchards). Label limits illustrative, check label.",
+    "isHighVolatilityExample": true
+  }
+]
