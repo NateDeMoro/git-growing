@@ -6,5 +6,6 @@
 | src/lib/uiStore.ts | Playback/UI store, uiActions, registerUiCallbacks | wiring hotkeys, camera, playback |
 | src/lib/log.ts | Log store (cap 5000), CSV | log or export bugs |
 | src/lib/stubAssess.ts, stubForecast.ts | TEMPORARY, W6 deletes | swapping in engine/forecast |
+| src/lib/forecast.ts | W5: frames from hours, windows, next GO, early warning, wobble | /api/now, /api/forecast, forecast UI |
 | src/components/DemoPanel.tsx | Global hotkeys + hidden panel | changing keys |
 | tests/fixtures/mock48.json | 48 mock frames + beats A-F | W3 frames48 lands (delete) |
