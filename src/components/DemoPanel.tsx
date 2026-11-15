@@ -8,11 +8,18 @@ import { uiActions, useUiStore } from "@/lib/uiStore";
 export function handleHotkey(e: KeyboardEvent): boolean {
   if (e.metaKey || e.ctrlKey || e.altKey) return false;
   const t = e.target as HTMLElement | null;
-  if (t && (["INPUT", "SELECT", "TEXTAREA"].includes(t.tagName) || t.isContentEditable)) return false;
+  if (t) {
+    const textLike = t.tagName === "INPUT" && !["range", "button", "checkbox"].includes((t as HTMLInputElement).type);
+    if (textLike || t.tagName === "SELECT" || t.tagName === "TEXTAREA" || t.isContentEditable) return false;
+  }
   const k = e.key;
   if (k === "`") uiActions.toggleDemoPanel();
   else if (k >= "1" && k <= "6") uiActions.jumpToBeat(Number(k) - 1);
-  else if (k === " ") uiActions.togglePlay();
+  else if (k === " ") {
+    const a = document.activeElement as HTMLElement | null;
+    if (a && a.tagName === "BUTTON") a.blur();
+    uiActions.togglePlay();
+  }
   else if (k === "[") uiActions.stepSpeed(-1);
   else if (k === "]") uiActions.stepSpeed(1);
   else if (k === "r" || k === "R") uiActions.clearLog();
@@ -31,8 +38,16 @@ export default function DemoPanel() {
   const mode = useUiStore((s) => s.mode);
   const view = useUiStore((s) => s.view);
   useEffect(() => {
+    const onUp = (e: PointerEvent) => {
+      const t = e.target as HTMLElement | null;
+      if (t && t.tagName === "INPUT" && (t as HTMLInputElement).type === "range") t.blur();
+    };
     window.addEventListener("keydown", handleHotkey);
-    return () => window.removeEventListener("keydown", handleHotkey);
+    window.addEventListener("pointerup", onUp);
+    return () => {
+      window.removeEventListener("keydown", handleHotkey);
+      window.removeEventListener("pointerup", onUp);
+    };
   }, []);
   if (!open) return null;
   const keys: [string, string][] = [

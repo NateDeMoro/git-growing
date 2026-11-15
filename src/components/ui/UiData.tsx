@@ -13,6 +13,8 @@ import { getUiState, uiActions, useUiStore } from "@/lib/uiStore";
 import { useFrame } from "@/components/FrameProvider";
 import mock from "../../../tests/fixtures/mock48.json"; // W6: swap for public/sim/week.json
 
+// W6 NOTE: real week.json frames are 5-minute steps. Use framesPerHour = 12, look-ahead at idx + 36 (3 sim-hours),
+// and a 24 h history of idx - 287..idx (downsample, e.g. every 6th frame, before handing to the charts).
 const FRAMES = mock.frames as unknown as SceneFrame[];
 const BEATS = mock.beats as Beat[];
 const LIVE_INDEX = 24;
@@ -147,9 +149,10 @@ export function UiDataProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const p = prev.current;
     const status = value.assessment.status;
-    const changed = !p || p.status !== status;
-    const advanced = !p || p.idx !== idx;
     prev.current = { idx, status };
+    if (!p) return; // no log entry on first mount
+    const changed = p.status !== status;
+    const advanced = p.idx !== idx;
     if (!(changed || (advanced && playing))) return;
     const f = value.frame;
     const lo = f.layers.find((l) => l.heightFt === 5)!;
@@ -159,7 +162,7 @@ export function UiDataProvider({ children }: { children: ReactNode }) {
       loggedAt: new Date().toISOString(),
       mode: f.mode,
       status,
-      statusChanged: !!p && p.status !== status,
+      statusChanged: p.status !== status,
       productId,
       recommendedDroplet: value.assessment.recommendedDroplet,
       triggers: value.assessment.reasons.map((r) => r.text),
