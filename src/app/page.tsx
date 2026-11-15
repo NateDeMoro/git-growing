@@ -1,18 +1,20 @@
 "use client";
-// Single page with Now / Forecast / Log tabs. W4 owns the 2D panels; W6 swaps the mock data behind UiDataProvider.
+// Single page with Now / Forecast / Log tabs. W4 owns the 2D panels; UiDataProvider supplies live, sim and forecast data.
 import { useState } from "react";
 import { FrameProvider } from "@/components/FrameProvider";
 import DemoPanel from "@/components/DemoPanel";
 import ForecastPanel from "@/components/ForecastPanel";
 import LogTable from "@/components/LogTable";
 import NowPanel from "@/components/NowPanel";
-import { UiDataProvider } from "@/components/ui/UiData";
+import { UiDataProvider, useUiData } from "@/components/ui/UiData";
 import { SITE } from "@/lib/site";
 
 type Tab = "now" | "forecast" | "log";
 
 function Shell() {
   const [tab, setTab] = useState<Tab>("now");
+  const { cached, forecast } = useUiData();
+  const showCached = tab === "forecast" ? forecast.cached : cached;
   return (
     <div className="flex min-h-screen flex-col">
       <header className="flex flex-wrap items-center justify-between gap-2 border-b border-line px-6 py-3">
@@ -22,6 +24,7 @@ function Shell() {
           </h1>
           <p className="text-sm text-muted">{SITE.name} · {SITE.crop} · Somerton, AZ</p>
         </div>
+        {showCached && <span className="rounded-full border border-caution/60 px-3 py-1 text-xs font-semibold text-caution" title="Live source unavailable; showing a committed snapshot">cached data</span>}
         <nav className="flex gap-1" aria-label="Views">
           {(["now", "forecast", "log"] as Tab[]).map((t) => (
             <button

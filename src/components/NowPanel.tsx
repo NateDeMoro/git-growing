@@ -21,7 +21,7 @@ import WindCompass from "./WindCompass";
 const Scene3D = dynamic(() => import("./scene/Scene3D"), { ssr: false });
 
 export default function NowPanel() {
-  const { frame, assessment, lookAhead } = useUiData();
+  const { frame, assessment } = useUiData();
   const collapsed = useUiStore((s) => s.chartsCollapsed);
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -31,7 +31,7 @@ export default function NowPanel() {
         </div>
         <div className="min-w-0 space-y-4 lg:max-h-[calc(100vh-290px)] lg:overflow-y-auto lg:pr-1">
           <StatusCard />
-          {lookAhead && <EarlyWarningBanner compact />}
+          <EarlyWarningBanner compact />
           <ReasonList />
           <ReadingsCard />
           <DropletAdvice />

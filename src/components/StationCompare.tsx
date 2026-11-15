@@ -26,9 +26,22 @@ export default function StationCompare() {
       {differ && (
         <p className="mt-2 text-sm font-semibold text-caution">The single station disagrees with the tower. Only the tower sees the 30 ft layer.</p>
       )}
-      <div className="mt-3 rounded-lg border border-dashed border-line p-2 text-xs text-muted">
-        {azmet ? "Regional AZMet station" : "Regional AZMet station (Yuma): reading appears here once live data is connected."}
-      </div>
+      {azmet ? (
+        <div className="mt-3 grid grid-cols-[1fr_auto] items-center gap-3 rounded-lg border border-line p-2">
+          <div className="text-xs text-muted">
+            <div className="font-semibold uppercase tracking-widest">Regional AZMet: {azmet.reading.stationName}</div>
+            <div>
+              {azmet.reading.tempF?.toFixed(1) ?? "n/a"}°F · {azmet.reading.windMph?.toFixed(1) ?? "n/a"} mph · {azmet.reading.rhPct ?? "n/a"}% RH
+              {azmet.cached ? " (cached)" : ""}
+            </div>
+          </div>
+          <span className={`text-2xl font-black ${STATUS_TEXT[azmet.assessment.status]}`}>{azmet.assessment.status}</span>
+        </div>
+      ) : (
+        <div className="mt-3 rounded-lg border border-dashed border-line p-2 text-xs text-muted">
+          Regional AZMet station (Yuma): live mode only.
+        </div>
+      )}
     </Card>
   );
 }

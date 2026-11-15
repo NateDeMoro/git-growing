@@ -18,7 +18,6 @@ import { useFrame } from "@/components/FrameProvider";
 
 const RANK: Record<Status, number> = { GO: 0, CAUTION: 1, STOP: 2 };
 const POLL_MS = 60_000;
-const LOOK_AHEAD_FRAMES = 3 * FRAMES_PER_HOUR; // 3 sim-hours
 const HISTORY_STEP = 6; // downsample 5-minute frames to 30-minute chart points
 const HISTORY_POINTS = 48; // 24 h
 
@@ -126,7 +125,6 @@ export function UiDataProvider({ children }: { children: ReactNode }) {
   // Live polling every 60 s while in Live mode.
   useEffect(() => {
     if (mode !== "live") return;
-    setWantForecast(true);
     let t = 0;
     const run = async () => {
       const ok = await pollLive();
@@ -141,11 +139,11 @@ export function UiDataProvider({ children }: { children: ReactNode }) {
 
   // Forecast data (fetched on demand so Simulate stays offline).
   useEffect(() => {
-    if (!wantForecast || fcRaw) return;
+    if ((!wantForecast && mode !== "live") || fcRaw) return;
     fetch("/api/forecast").then((r) => r.json()).then((j) => {
       setFcRaw({ frames: j.frames, nowIndex: j.nowIndex ?? 0, nws: j.nws, source: j.source, cached: !!j.cached });
     }).catch(() => {});
-  }, [wantForecast, fcRaw]);
+  }, [wantForecast, mode, fcRaw]);
 
   // Sim playhead driver. Store writes are throttled to ~30 per second; frame scanning for the log is in the logger.
   useEffect(() => {
@@ -252,7 +250,7 @@ export function UiDataProvider({ children }: { children: ReactNode }) {
   }, [mode, frames, bucket, assessAt, fcRaw, product]);
 
   // Look-ahead: first of the next 3 sim-hours whose status is worse than now.
-  const lookAhead = useMemo<UiData["lookAhead"]>(() => {
+  const lookAhead = ((): UiData["lookAhead"] => {
     if (mode !== "sim" || !frames || !assessment) return null;
     for (let h = 1; h <= 3; h++) {
       const j = idx + h * FRAMES_PER_HOUR;
@@ -268,8 +266,7 @@ export function UiDataProvider({ children }: { children: ReactNode }) {
       }
     }
     return null;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mode, frames, idx, assessment, assessAt]);
+  })();
 
   const cached = mode === "live" && ((liveRes?.cached ?? false) || (stationRes?.cached ?? false));
 

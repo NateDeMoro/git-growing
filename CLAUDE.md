@@ -2,10 +2,11 @@
 
 | File | Description | Open when |
 |---|---|---|
-| src/components/ui/UiData.tsx | Single data seam (mock driver, stub assess, log append) | W6 wiring real data |
+| src/components/ui/UiData.tsx | Single data seam: live poll (60 s), week.json playhead driver, assess, logging, look-ahead, forecast, AZMet | any data/playback/log bug |
 | src/lib/uiStore.ts | Playback/UI store, uiActions, registerUiCallbacks | wiring hotkeys, camera, playback |
 | src/lib/log.ts | Log store (cap 5000), CSV | log or export bugs |
-| src/lib/stubAssess.ts, stubForecast.ts | TEMPORARY, W6 deletes | swapping in engine/forecast |
+| src/lib/assessCache.ts | Memoized assess per product+frame | status lags after product change |
+| src/lib/simLogger.ts | Log entry builder + frame-scanning sim logger | log dedupe/replay issues |
+| src/lib/stationFrame.ts | AZMet reading -> single-layer frame | station card |
 | src/lib/forecast.ts | W5: frames from hours, windows, next GO, early warning, wobble | /api/now, /api/forecast, forecast UI |
 | src/components/DemoPanel.tsx | Global hotkeys + hidden panel | changing keys |
-| tests/fixtures/mock48.json | 48 mock frames + beats A-F | W3 frames48 lands (delete) |
