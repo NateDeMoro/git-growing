@@ -13,7 +13,7 @@ type Tab = "now" | "forecast" | "log";
 
 function Shell() {
   const [tab, setTab] = useState<Tab>("now");
-  const { cached, forecast } = useUiData();
+  const { cached, forecast, notice } = useUiData();
   const showCached = tab === "forecast" ? forecast.cached : cached;
   return (
     <div className="flex min-h-screen flex-col">
@@ -24,6 +24,7 @@ function Shell() {
           </h1>
           <p className="text-sm text-muted">{SITE.name} · {SITE.crop} · Somerton, AZ</p>
         </div>
+        {notice && <span className="rounded-full border border-line px-3 py-1 text-xs text-muted" role="status">{notice}</span>}
         {showCached && <span className="rounded-full border border-caution/60 px-3 py-1 text-xs font-semibold text-caution" title="Live source unavailable; showing a committed snapshot">cached data</span>}
         <nav className="flex gap-1" aria-label="Views">
           {(["now", "forecast", "log"] as Tab[]).map((t) => (

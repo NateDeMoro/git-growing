@@ -46,12 +46,24 @@ export function createSimLogger(d: SimLoggerDeps) {
 
   function emit(i: number, changed: boolean) {
     const f = d.frameAt(i);
-    if (done.has(f.time)) return;
-    done.add(f.time);
+    const key = `${f.time}|${f.mode}|${d.productId}`;
+    if (done.has(key)) return;
+    done.add(key);
     d.append(makeLogEntry(f, d.assessAt(i), d.productId, changed));
   }
 
   return {
+    /** Use when: the log was cleared, so a replay must refill it. */
+    reset() {
+      done.clear();
+    },
+    /** Use when: the product changed mid-sim. Logs the status change at `idx` once (if the verdict differs). */
+    switchProduct(idx: number, prevStatus: Status) {
+      const s = d.assessAt(idx).status;
+      last = idx;
+      lastStatus = s;
+      if (s !== prevStatus) emit(idx, true);
+    },
     update(idx: number) {
       if (last === null) {
         last = idx;
