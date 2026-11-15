@@ -20,7 +20,7 @@ export default function NowPanel() {
         <div className="min-h-[420px] min-w-0 lg:h-full lg:min-h-0">
           <Scene3D frame={frame} assessment={assessment} />
         </div>
-        <div className="flex min-h-0 min-w-0 flex-col gap-3 overflow-y-auto pr-1 lg:overflow-hidden">
+        <div className="flex min-h-0 min-w-0 flex-col gap-3 overflow-y-auto pr-1">
           <StatusCard />
           <ReasonList />
           <DropletAdvice />
