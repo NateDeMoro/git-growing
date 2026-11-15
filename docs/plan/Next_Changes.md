@@ -97,6 +97,11 @@ It also gives a one-line "why": coarser droplets drift less, but cover the leaf 
   - **Requirement change:** the original goal listed "temperature layers" and "inversion lid" for the 3D view. This change removes them by the user's decision, 2026-11-15.
 - **Remove the "Spraying" toggle.** This is the checkbox in the 3D map's top-right corner, which turns the drift particles on and off. With it gone, drift particles always show from the focused block, in Live and Simulate. Drift is a required part of the 3D view, so the particles stay; only the switch goes.
 
+### 9. Forecast tab
+- Remove the "Next 24 hours" clock (WindowDial).
+- The temperature chart shows only the 5 ft and 30 ft temperatures. The NWS mixing height line and its second axis go.
+- Add a "Tower" dropdown to the temperature chart. Only one tower exists today, but it's real selectable state, to show a farm with several towers could switch between them.
+
 Not decided yet (confirm before the run):
 - Where the "Why these limits" panel goes. It was a requirement in the original goal; options are a link that opens it, or moving it to its own tab.
 - Whether the early-warning banner (e.g. "Storm arriving in 2 hours") stays on the Now tab. It stays on the Forecast tab either way.
