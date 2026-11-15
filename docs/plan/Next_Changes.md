@@ -102,6 +102,22 @@ It also gives a one-line "why": coarser droplets drift less, but cover the leaf 
 - The temperature chart shows only the 5 ft and 30 ft temperatures. The NWS mixing height line and its second axis go.
 - Add a "Tower" dropdown to the temperature chart. Only one tower exists today, but it's real selectable state, to show a farm with several towers could switch between them.
 
+### 10. Make CAUTION say what to do
+CAUTION covers about ten different situations, and the current action line ("Hold, or switch to coarser droplets") is unclear. Every CAUTION becomes one of two kinds, picked from the reason that caused it:
+- **Spray with care: "OK to spray if…"** plus the condition.
+  - Dry air (Delta T 10–12 °C): only with Very Coarse nozzles.
+  - Wind within 2 mph of the limit: watch the wind and stop at the limit.
+  - Inversion likely forming: finish the current block, don't start a new one.
+  - Rain likely within 2 hours: only if the label's rainfast time is shorter than the time until rain.
+  - Storm approaching: finish within the hours before it arrives.
+- **Wait: "Wait until…"** plus a forecast time where known.
+  - Gusts over the limit.
+  - Too calm with no inversion.
+  - Weak inversion.
+  - Light rain.
+
+If several CAUTION reasons fire at once, any "wait" reason wins. The verdict bar shows the kind under the word CAUTION ("Spray with care" or "Wait") and the action line in large type. The 3D map pill stays verdict-only (item 8). Covered by unit tests.
+
 Not decided yet (confirm before the run):
 - Where the "Why these limits" panel goes. It was a requirement in the original goal; options are a link that opens it, or moving it to its own tab.
 - Whether the early-warning banner (e.g. "Storm arriving in 2 hours") stays on the Now tab. It stays on the Forecast tab either way.
