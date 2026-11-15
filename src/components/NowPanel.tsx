@@ -24,7 +24,7 @@ export default function NowPanel() {
           <StatusCard />
           <ReasonList />
           <DropletAdvice />
-          <div className="min-h-[140px] flex-1 overflow-y-auto"><ReadingsCard /></div>
+          <ReadingsCard />
         </div>
       </div>
       <ProductPicker />
