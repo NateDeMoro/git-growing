@@ -6,6 +6,8 @@ import { cachedAssess } from "@/lib/assessCache";
 import { useUiData } from "./ui/UiData";
 import { STATUS_BG, STATUS_BORDER, STATUS_GLOW, STATUS_TEXT, dayClock } from "./ui/shared";
 
+const RANK = { STOP: 0, CAUTION: 1, GO: 2 } as const; // station line shows only when the station is more permissive than the tower
+
 export default function StatusCard() {
   const { assessment, frame, product, forecast, earlyWarning } = useUiData();
   const station = useMemo(() => cachedAssess(frame, product, "singleStation", frame.time), [frame, product]);
@@ -29,7 +31,7 @@ export default function StatusCard() {
       <p className="mt-2 rounded-lg border border-line/70 bg-panel/60 px-3 py-2 text-xl font-semibold leading-snug text-foreground" data-testid="do-this">
         <span className="mr-2 text-xs font-bold uppercase tracking-widest text-muted">Do this</span>{doThis}
       </p>
-      {station.status !== s && (
+      {RANK[station.status] > RANK[s] && (
         <p className="mt-2 flex items-center gap-2 whitespace-nowrap text-sm text-foreground" data-testid="station-compare">
           <span>Ground station alone (5 ft):</span>
           <span className={`rounded-full border px-2 py-0.5 text-sm font-bold ${STATUS_BORDER[station.status]} ${STATUS_BG[station.status]} ${STATUS_TEXT[station.status]}`}>{station.status}</span>
