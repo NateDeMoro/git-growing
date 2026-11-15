@@ -47,6 +47,10 @@ describe("week.json", () => {
     const bad = (v: unknown): boolean => v === null || (typeof v === "number" && !Number.isFinite(v)) || (typeof v === "object" && Object.values(v as object).some(bad));
     expect(week.frames.some(bad)).toBe(false);
   });
+  it("sun elevation is in degrees: |elev| <= 90 and local noon above 20", () => {
+    week.frames.forEach((f: any) => expect(Math.abs(f.sun.elevationDeg)).toBeLessThanOrEqual(90));
+    week.frames.filter((f: any) => f.time.slice(11, 16) === "12:00").forEach((f: any) => expect(f.sun.elevationDeg).toBeGreaterThan(20));
+  });
   it("beats are in range and in order", () => {
     expect(week.beats.map((b: any) => b.id)).toEqual(["A", "B", "C", "D", "E", "F"]);
     const idx = week.beats.map((b: any) => b.frameIndex);

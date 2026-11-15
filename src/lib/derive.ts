@@ -143,7 +143,7 @@ export function sunInfo(ms: number) {
   const { lat, lon } = SITE.tower;
   const noonLocal = Math.floor((ms + PHOENIX_OFFSET_MIN * 60000) / 86400000) * 86400000 + 12 * 3600000 - PHOENIX_OFFSET_MIN * 60000;
   const times = SunCalc.getTimes(new Date(noonLocal), lat, lon);
-  const elev = (SunCalc.getPosition(new Date(ms), lat, lon).altitude * 180) / Math.PI;
+  const elev = SunCalc.getPosition(new Date(ms), lat, lon).altitude; // this suncalc build returns degrees
   return {
     elevationDeg: elev,
     isDay: elev > 0,
