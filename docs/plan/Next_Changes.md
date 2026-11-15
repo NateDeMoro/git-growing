@@ -95,6 +95,7 @@ It also gives a one-line "why": coarser droplets drift less, but cover the leaf 
   - **Manual step 7 changes:** Beat A no longer checks for "the warm slab sits over the cool one and the lid glows". Instead it checks that the 30 ft label reads warmer than 5 ft and that drift flattens.
   - **Dropped candidates:** V2 (the fixed legend) and V3 (layer height labels).
   - **Requirement change:** the original goal listed "temperature layers" and "inversion lid" for the 3D view. This change removes them by the user's decision, 2026-11-15.
+- **Remove the spray drift animation entirely** (user decision, 2026-11-15). The drift particles from the focused block are gone. The inversion now shows only through the tower's 5 ft and 30 ft labels and the right column. Wind particles stay.
 - **Remove the "Spraying" toggle.** This is the checkbox in the 3D map's top-right corner, which turns the drift particles on and off. With it gone, drift particles always show from the focused block, in Live and Simulate. Drift is a required part of the 3D view, so the particles stay; only the switch goes.
 
 ### 9. Forecast tab
