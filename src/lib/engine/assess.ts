@@ -135,7 +135,7 @@ export function assess(frame: SceneFrame, product: Product, mode: AssessMode = "
   if (full && product.volatility === "high" && hasInversion) {
     rs.push(reason("volatility", "STOP", `${product.name} is highly volatile (${r1(product.vaporPressureMpa)} mPa, over ${T.volatility.highAboveMpa} mPa) and there is a ${r1(inv)}°F inversion: vapor will stay near the ground and move.`, SOURCES.ppdb));
   }
-  if (full && frame.context?.inversionForecastNext12h) {
+  if (full && product.volatility === "high" && frame.context?.inversionForecastNext12h) {
     rs.push(reason("volatilityForecast", "CAUTION", `An inversion is forecast within ${T.volatility.vaporWatchHours} hours: vapor can keep moving for hours after application.`, SOURCES.epaVolatility));
   }
 

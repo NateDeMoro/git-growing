@@ -79,6 +79,12 @@ describe("assess", () => {
     expect(assess(f, highVol).status).toBe("STOP");
   });
 
+  it("forecast-inversion vapor caution applies only to high-volatility products", () => {
+    const f = frame({ forecastInv: true });
+    expect(assess(f, lowVol).status).toBe("GO");
+    expect(assess(f, highVol).reasons.some((r) => r.ruleId === "volatilityForecast")).toBe(true);
+  });
+
   it("single-station mode skips the inversion rule", () => {
     const f = frame({ inv: 3 });
     expect(assess(f, lowVol, "full").status).toBe("STOP");
