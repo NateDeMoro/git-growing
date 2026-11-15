@@ -8,7 +8,7 @@
 | src/lib/assessCache.ts | Memoized assess per product+frame | status lags after product change |
 | src/lib/nozzles.ts, data/nozzles.json | Droplet class -> nozzle type, ISO 10625 color/size, psi range, sources | changing nozzle advice or its data |
 | src/lib/simLogger.ts | Log entry builder + frame-scanning sim logger | log dedupe/replay issues |
-| src/lib/engine/action.ts | Pure "Do this" sentence from assessment + next safe window + early warning | changing the action wording |
+| src/lib/engine/action.ts | Pure "Do this" sentence + CAUTION kind (care/wait, cautionAction) from assessment + next safe window + early warning | changing the action wording |
 | src/components/NowPanel.tsx | Now tab: map, verdict bar (StatusCard), Reasons (+Why these limits modal), DropletAdvice, Readings, bottom product + playback bars | Now tab layout |
 | src/components/ForecastChart.tsx | 7-day 5 ft / 30 ft temps + NWS mixing height | forecast chart |
 | src/lib/stationFrame.ts | AZMet reading -> single-layer frame | station card |

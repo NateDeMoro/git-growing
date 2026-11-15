@@ -44,8 +44,45 @@ export function shortCause(ruleId: string, text: string, frame?: SceneFrame, pro
   }
 }
 
+export type CautionKind = "care" | "wait";
+export type ActionKind = CautionKind | null;
+
+const WAIT_RULES = new Set(["gust", "windLow", "inversion", "rain"]);
+
+/** Use when: CAUTION needs a kind ("care" or "wait") and one plain sentence. Any wait reason wins over care reasons. */
+export function cautionAction({ assessment: a, frame, product, nextSafeStart, earlyWarning }: ActionInput): { kind: ActionKind; line: string } {
+  const rs = a.reasons.filter((r) => r.status === "CAUTION");
+  if (a.status !== "CAUTION" || rs.length === 0) return { kind: null, line: "" };
+  if (rs.some((r) => WAIT_RULES.has(r.ruleId))) {
+    return { kind: "wait", line: nextSafeStart ? `Wait until ${windowLabel(nextSafeStart)}.` : "Wait and recheck in an hour." };
+  }
+  const rec = a.recommendedDroplet;
+  const conds: string[] = [];
+  const add = (c: string) => { if (!conds.includes(c)) conds.push(c); };
+  for (const r of rs) {
+    switch (r.ruleId) {
+      case "deltaT": add(frame && frame.derived.deltaTC < 5 ? "you use Coarse (C) or coarser nozzles, since humid air keeps droplets airborne" : "you use only Very Coarse (VC) or coarser nozzles"); break;
+      case "windHigh": add(`you watch the wind and stop if it reaches ${product.labelWindMaxMph} mph`); break;
+      case "timingHint": add("you finish the block you're on and don't start a new one"); break;
+      case "rainChance": add("the label's rainfast time is shorter than the time until rain"); break;
+      case "pressure": {
+        const h = earlyWarning?.hours;
+        add(h ? `you finish within ${h} hour${h > 1 ? "s" : ""}, before the storm` : "you finish soon, before the storm");
+        break;
+      }
+      case "volatilityForecast": add("you finish well before tonight's inversion"); break;
+      case "speedShear": case "dirShear": add("you use coarser droplets and watch the wind at 30 ft"); break;
+      default: add("you watch conditions closely");
+    }
+  }
+  let line = `OK to spray if: ${conds.slice(0, 2).join("; ")}.`;
+  if (rec && !conds.some((c) => /nozzle|droplet/.test(c))) line += ` Use ${dropletInfo(rec).name} (${rec}) or coarser droplets.`;
+  return { kind: "care", line };
+}
+
 /** Use when: you need the "Do this" sentence. */
-export function actionLine({ assessment: a, frame, product, nextSafeStart, earlyWarning }: ActionInput): string {
+export function actionLine(input: ActionInput): string {
+  const { assessment: a, frame, product, nextSafeStart, earlyWarning } = input;
   const r0 = a.reasons[0];
   const top = r0 ? shortCause(r0.ruleId, r0.text, frame, product) : "";
   const rec = a.recommendedDroplet;
@@ -54,11 +91,7 @@ export function actionLine({ assessment: a, frame, product, nextSafeStart, early
     const warn = earlyWarning ? ` Conditions turn ${earlyWarning.status} in about ${earlyWarning.hours ?? 1} hour${(earlyWarning.hours ?? 1) > 1 ? "s" : ""}, so finish early.` : "";
     return `Spray now with ${droplet}, and stop if the wind passes ${product.labelWindMaxMph} mph.${warn}`;
   }
-  if (a.status === "CAUTION") {
-    return rec
-      ? `Hold, or switch to ${dropletInfo(rec).name} (${rec}) or coarser droplets before spraying.`
-      : "Hold off and recheck in an hour.";
-  }
+  if (a.status === "CAUTION") return cautionAction(input).line;
   const when = nextSafeStart ? ` Next safe window starts ${windowLabel(nextSafeStart)}.` : " No safe window is known yet.";
   return `Don't spray: ${top}.${when}`;
 }

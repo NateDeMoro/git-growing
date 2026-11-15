@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
-import { actionLine } from "../src/lib/engine/action";
+import { actionLine, cautionAction } from "../src/lib/engine/action";
 import { assess } from "../src/lib/engine/assess";
 import { buildForecast } from "../src/lib/forecast";
 import { DEFAULT_PRODUCT_ID, productById } from "../src/lib/products";
@@ -45,9 +45,34 @@ describe("Do this line", () => {
     expect(line).toMatch(/^Don't spray: wind 25 mph, over the 10 mph limit\./);
     expect(line).not.toMatch(/undefined/);
   });
-  it("CAUTION recommends holding or a coarser class", () => {
-    const a = { ...assess(frames[beatIdx("B")], product), status: "CAUTION" as const, recommendedDroplet: "C" as const };
-    expect(actionLine({ assessment: a, product })).toMatch(/Hold, or switch to Coarse/);
+});
+
+describe("CAUTION kind and line", () => {
+  const src = { ruleId: "x" } as any;
+  const mk = (...ids: string[]) => ({ ...assess(frames[beatIdx("B")], product), status: "CAUTION" as const, recommendedDroplet: "VC" as const,
+    reasons: ids.map((ruleId) => ({ ruleId, status: "CAUTION" as const, text: ruleId, source: src })) });
+  it("deltaT only: spray with care, Very Coarse", () => {
+    const r = cautionAction({ assessment: mk("deltaT"), product });
+    expect(r.kind).toBe("care");
+    expect(r.line).toMatch(/^OK to spray if: .*Very Coarse \(VC\)/);
+  });
+  it("gust: wait, with or without a known window", () => {
+    expect(cautionAction({ assessment: mk("gust"), product, nextSafeStart: "2026-05-04T09:30:00-07:00" })).toEqual({ kind: "wait", line: "Wait until Mon 9:30 AM." });
+    expect(cautionAction({ assessment: mk("gust"), product }).line).toBe("Wait and recheck in an hour.");
+  });
+  it("mixed care + wait: wait wins", () => {
+    expect(cautionAction({ assessment: mk("deltaT", "gust"), product }).kind).toBe("wait");
+  });
+  it("two care conditions are joined, pressure uses early-warning hours", () => {
+    const r = cautionAction({ assessment: mk("pressure", "timingHint", "rainChance"), product, earlyWarning: { at: "", status: "STOP", reason: "", hours: 2 } });
+    expect(r.line).toBe("OK to spray if: you finish within 2 hours, before the storm; you finish the block you're on and don't start a new one. Use Very Coarse (VC) or coarser droplets.");
+  });
+  it("a real CAUTION frame gives a non-empty OK/Wait line", () => {
+    const idx = frames.findIndex((f) => assess(f, product).status === "CAUTION");
+    expect(idx).toBeGreaterThanOrEqual(0);
+    const { line } = lineAt(idx);
+    expect(line).toMatch(/^(OK to spray if|Wait)/);
+    expect(line).not.toMatch(/undefined|NaN/);
   });
 });
 
