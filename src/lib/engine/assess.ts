@@ -102,7 +102,7 @@ export function assess(frame: SceneFrame, product: Product, mode: AssessMode = "
     if (over >= T.gust.stopOverMaxMph) {
       rs.push(reason("gust", "STOP", `Gusts reach ${r1(w.gustMph)} mph, ${r1(over)} mph over the ${r1(maxWind)} mph label maximum.`, SOURCES.heuristic));
     } else {
-      rs.push(reason("gust", "CAUTION", `Gusts reach ${r1(w.gustMph)} mph, over the ${r1(maxWind)} mph label maximum.`, SOURCES.heuristic));
+      rs.push(reason("gust", "CAUTION", `Gusts reach ${r1(w.gustMph)} mph, over the ${r1(maxWind)} mph label maximum.`, SOURCES.purdue2018));
     }
   }
 
@@ -151,7 +151,7 @@ export function assess(frame: SceneFrame, product: Product, mode: AssessMode = "
     rs.push(reason("rain", "CAUTION", `Light rain is falling at ${r2(w.rainInHr)} in/hr.`, SOURCES.amsRain));
   }
   if (w.rainProbNext2hPct > T.rain.probCautionPct) {
-    rs.push(reason("rainChance", "CAUTION", `${Math.round(w.rainProbNext2hPct)}% chance of rain in the next 2 hours: check the label's rainfast period.`, SOURCES.heuristic));
+    rs.push(reason("rainChance", "CAUTION", `${Math.round(w.rainProbNext2hPct)}% chance of rain in the next 2 hours: check the label's rainfast period.`, SOURCES.ucIpmChecklist));
   }
 
   // Storm approaching
@@ -198,7 +198,7 @@ export function assess(frame: SceneFrame, product: Product, mode: AssessMode = "
   const info = dropletInfo(rec);
   const status = perClass[rec] as Status;
   if (rs.length === 0) {
-    rs.push(reason("allClear", "GO", "Wind, temperature layers, Delta T, rain and pressure are all within limits.", SOURCES.heuristic));
+    rs.push(reason("allClear", "GO", "Wind, temperature layers, Delta T, rain and pressure are all within limits.", SOURCES.labelWind));
   }
   return {
     status,
