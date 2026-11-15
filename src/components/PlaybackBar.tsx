@@ -47,11 +47,22 @@ export default function PlaybackBar() {
           className="w-full accent-green-400"
           aria-label="Sim time"
         />
-        <div className="pointer-events-none relative h-7">
-          {beats.map((b) => (
-            <span key={b.id} className="absolute top-0 -translate-x-1/2 text-[11px] font-bold text-caution" style={{ left: `${(b.frameIndex / last) * 100}%` }} title={b.label}>
+        <div className="relative h-7">
+          {beats.map((b, i) => (
+            <button
+              key={b.id}
+              type="button"
+              onClick={(e) => {
+                uiActions.jumpToBeat(i);
+                e.currentTarget.blur();
+              }}
+              title={`Beat ${b.id}: ${b.label}`}
+              aria-label={`Beat ${b.id}: ${b.label}`}
+              className="absolute top-0 min-h-7 min-w-6 -translate-x-1/2 cursor-pointer rounded px-1 text-center text-[11px] font-bold leading-tight text-caution hover:bg-caution/20 hover:text-foreground focus-visible:bg-caution/20 focus-visible:outline focus-visible:outline-1 focus-visible:outline-caution"
+              style={{ left: `${(b.frameIndex / last) * 100}%` }}
+            >
               |<br />{b.id}
-            </span>
+            </button>
           ))}
         </div>
       </div>
