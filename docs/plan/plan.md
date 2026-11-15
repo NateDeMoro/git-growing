@@ -350,3 +350,12 @@ Unit (keep to these; speed over coverage):
   - the drift ceiling is below the lid under an inversion and unbounded in GO conditions
   - tree positions fall inside their block and the total stays under the 30,000 cap
 - Coverage gap, accepted: no UI component tests and no API route tests beyond the manual curls.
+
+## Coordinator decisions during the run (2026-11-15)
+- Phase 0 is on main (commit 2b587f9). src/lib/contract.ts, thresholds.ts (SOURCES, T, RULE_DOCS), droplets.ts, site.ts (placeholder), products.ts (stub), mockFrame.ts, FrameProvider and the Scene3D placeholder exist. Builders conform to these names.
+- Boundary rule: a value exactly at a cutoff gets the stricter status.
+- Context fields: forecast-inversion-within-12h is SceneFrame.context.inversionForecastNext12h. Rain chance is SceneFrame.weather.rainProbNext2hPct.
+- The forecast-inversion vapor caution is off in single-station mode.
+- Beat A keeps cloud above 25%, so the timing hint does not push the single-station card off GO.
+- The look-ahead status 3 hours ahead is computed at runtime (W6). Frames hold readings only.
+- Tower heights are 5 ft and 30 ft everywhere.
