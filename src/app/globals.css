@@ -1,23 +1,52 @@
 @import "tailwindcss";
 
+/* Dark control-room tokens. Use when: any 2D panel needs a status color, glow or card surface. */
 :root {
-  --background: #05080d;
-  --foreground: #e2e8f0;
-  --go: #22c55e;
-  --caution: #f59e0b;
-  --stop: #ef4444;
+  --background: #04070c;
+  --foreground: #e6edf5;
+  --panel: #0a1119;
+  --panel-2: #0f1925;
+  --line: #1e2c3d;
+  --muted: #8da2b8;
+  --go: #2bf06f;
+  --caution: #ffb020;
+  --stop: #ff4d4d;
+  --go-glow: 0 0 28px rgba(43, 240, 111, 0.45);
+  --caution-glow: 0 0 28px rgba(255, 176, 32, 0.45);
+  --stop-glow: 0 0 28px rgba(255, 77, 77, 0.5);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-panel: var(--panel);
+  --color-panel2: var(--panel-2);
+  --color-line: var(--line);
+  --color-muted: var(--muted);
+  --color-go: var(--go);
+  --color-caution: var(--caution);
+  --color-stop: var(--stop);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
+html,
+body {
+  overflow-x: hidden;
+}
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-geist-sans), system-ui, sans-serif;
 }
+
+.glow-go { box-shadow: var(--go-glow); }
+.glow-caution { box-shadow: var(--caution-glow); }
+.glow-stop { box-shadow: var(--stop-glow); }
+
+@keyframes pulse-stop {
+  0%, 100% { box-shadow: 0 0 18px rgba(255, 77, 77, 0.35); }
+  50% { box-shadow: 0 0 42px rgba(255, 77, 77, 0.75); }
+}
+.pulse-stop { animation: pulse-stop 1.8s ease-in-out infinite; }

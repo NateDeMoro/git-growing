@@ -1,49 +1,45 @@
 "use client";
-// Single page with Now / Forecast / Log tabs. W4 fills the panels; W6 wires data.
-import dynamic from "next/dynamic";
+// Single page with Now / Forecast / Log tabs. W4 owns the 2D panels; W6 swaps the mock data behind UiDataProvider.
 import { useState } from "react";
-import { FrameProvider, useFrame } from "@/components/FrameProvider";
-
-const Scene3D = dynamic(() => import("@/components/scene/Scene3D"), { ssr: false });
+import { FrameProvider } from "@/components/FrameProvider";
+import DemoPanel from "@/components/DemoPanel";
+import ForecastPanel from "@/components/ForecastPanel";
+import LogTable from "@/components/LogTable";
+import NowPanel from "@/components/NowPanel";
+import { UiDataProvider } from "@/components/ui/UiData";
+import { SITE } from "@/lib/site";
 
 type Tab = "now" | "forecast" | "log";
 
 function Shell() {
   const [tab, setTab] = useState<Tab>("now");
-  const { frame, assessment } = useFrame();
   return (
     <div className="flex min-h-screen flex-col">
-      <header className="flex items-center justify-between border-b border-slate-800 px-6 py-3">
+      <header className="flex flex-wrap items-center justify-between gap-2 border-b border-line px-6 py-3">
         <div>
-          <h1 className="text-xl font-semibold tracking-tight text-slate-50">
-            Spray or Wait <span className="font-normal text-slate-400">· by GitGrowing</span>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">
+            Spray or Wait <span className="font-normal text-muted">· by GitGrowing</span>
           </h1>
-          <p className="text-xs text-slate-400">UA Yuma Mesa Farm · citrus · Somerton, AZ</p>
+          <p className="text-sm text-muted">{SITE.name} · {SITE.crop} · Somerton, AZ</p>
         </div>
-        <nav className="flex gap-1">
+        <nav className="flex gap-1" aria-label="Views">
           {(["now", "forecast", "log"] as Tab[]).map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
-              className={`rounded-md px-3 py-1.5 text-sm capitalize ${
-                tab === t ? "bg-slate-700 text-white" : "text-slate-400 hover:text-slate-200"
-              }`}
+              className={`rounded-md px-4 py-2 text-base font-semibold capitalize ${tab === t ? "bg-go/20 text-go" : "text-muted hover:text-foreground"}`}
             >
               {t}
             </button>
           ))}
         </nav>
       </header>
-      <main className="flex-1 p-4">
-        {tab === "now" && (
-          <div className="grid gap-4 lg:grid-cols-[3fr_2fr]">
-            <Scene3D frame={frame} assessment={assessment} />
-            <div className="rounded-xl border border-slate-700 p-4 text-slate-200">Status: {assessment.status}</div>
-          </div>
-        )}
-        {tab === "forecast" && <div className="text-slate-300">Forecast coming soon</div>}
-        {tab === "log" && <div className="text-slate-300">Log coming soon</div>}
+      <main className="flex min-h-0 flex-1 flex-col">
+        {tab === "now" && <NowPanel />}
+        {tab === "forecast" && <ForecastPanel />}
+        {tab === "log" && <LogTable />}
       </main>
+      <DemoPanel />
     </div>
   );
 }
@@ -51,7 +47,9 @@ function Shell() {
 export default function Page() {
   return (
     <FrameProvider>
-      <Shell />
+      <UiDataProvider>
+        <Shell />
+      </UiDataProvider>
     </FrameProvider>
   );
 }
