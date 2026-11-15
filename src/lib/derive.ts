@@ -1,6 +1,6 @@
 // Hourly weather record + calibration -> SceneFrame. Pure: no network, no randomness, no machine timezone.
 // Use when: building a frame from an Open-Meteo hour (live /api/now, forecast, scripts/build-sim.ts).
-import SunCalc from "suncalc";
+import * as SunCalc from "suncalc";
 import type { Derived, DriftVector, Layer, SceneFrame } from "./contract";
 import { SITE } from "./site";
 

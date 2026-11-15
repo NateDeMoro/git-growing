@@ -2,7 +2,7 @@
 // Use when: site.ts changes or the calibration range changes. Run: npm run calibrate
 import fs from "node:fs";
 import path from "node:path";
-import SunCalc from "suncalc";
+import * as SunCalc from "suncalc";
 import { SITE } from "../src/lib/site";
 import { fitExponent, localToMs, logFraction } from "../src/lib/derive";
 import { pullHourly } from "./lib-openmeteo";
