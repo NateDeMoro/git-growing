@@ -38,8 +38,8 @@ async function main() {
   let idx = 0;
   for (let d = firstDay; d <= lastDay; d++) {
     const noon = (day: number) => new Date(day * dayMs + 12 * 3600000 + 7 * 3600000 - 12 * 3600000 + 12 * 3600000);
-    const set = SunCalc.getTimes(noon(d), lat, lon).sunset.getTime();
-    const rise = SunCalc.getTimes(noon(d + 1), lat, lon).sunrise.getTime() + 3600000;
+    const set = SunCalc.getTimes(noon(d), lat, lon).sunset!.getTime();
+    const rise = SunCalc.getTimes(noon(d + 1), lat, lon).sunrise!.getTime() + 3600000;
     while (idx < byMs.length && byMs[idx].ms < set - 3600000) idx++;
     const g: number[] = [];
     for (let j = idx; j < byMs.length && byMs[j].ms <= rise; j++) if (byMs[j].ms >= set) g.push(byMs[j].raw);

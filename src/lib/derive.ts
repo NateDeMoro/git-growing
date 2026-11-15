@@ -147,8 +147,8 @@ export function sunInfo(ms: number) {
   return {
     elevationDeg: elev,
     isDay: elev > 0,
-    sunriseIso: msToIso(times.sunrise.getTime()),
-    sunsetIso: msToIso(times.sunset.getTime()),
+    sunriseIso: msToIso(times.sunrise!.getTime()),
+    sunsetIso: msToIso(times.sunset!.getTime()),
   };
 }
 
