@@ -28,6 +28,7 @@ export function sunTimesForDay(ms: number): DayTimes {
 
 /** True from (sunset - 3 h) until (next sunrise + 1 h). Use when: applying the Faber 2015 timing hint (cloud checked by caller). */
 export function inInversionWindow(ms: number): boolean {
+  if (!Number.isFinite(ms)) return false;
   const today = sunTimesForDay(ms);
   if (ms >= today.sunsetMs - T.timingHint.hoursBeforeSunset * HOUR) return true;
   return ms < today.sunriseMs + T.timingHint.hoursAfterSunrise * HOUR;
