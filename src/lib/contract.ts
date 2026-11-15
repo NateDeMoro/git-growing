@@ -118,7 +118,10 @@ export interface Assessment {
 export interface Beat {
   id: "A" | "B" | "C" | "D" | "E" | "F";
   label: string;
-  frameIndex: number;
+  frameIndex: number; // demo landing frame
+  startFrameIndex?: number;
+  peakFrameIndex?: number;
+  description?: string;
 }
 
 export interface SimWeek {
@@ -126,6 +129,13 @@ export interface SimWeek {
   stepMinutes: 5;
   beats: Beat[];
   frames: SceneFrame[];
+  meta?: {
+    sourceWeek: { start: string; end: string };
+    seed: number;
+    calibrationK: number;
+    site: { lat: number; lon: number };
+    note: string;
+  };
 }
 
 export interface LogEntry {
