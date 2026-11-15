@@ -8,6 +8,7 @@ import { STATUS_RGB, tempColor, compass } from "@/lib/scene/color";
 import type { PathBuf } from "../sim";
 import type { SceneCtx } from "./types";
 
+const TREE_DATA = new WeakMap<Float32Array, { length: number; attributes: { getPosition: { value: Float32Array; size: number } } }>();
 const CHARS = Array.from(" 0123456789.,:-°ftmphNSEWdrift pathFLDC");
 const BLOCKS = (() => {
   const o = { lon: SITE.tower.lon, lat: SITE.tower.lat };
@@ -71,10 +72,12 @@ export function buildLayers(c: SceneCtx) {
     }),
   );
 
-  // 2. trees (one instanced layer, static data)
+  // 2. trees (one instanced layer, static data; data reference cached so positions upload once)
+  let treeData = TREE_DATA.get(c.trees);
+  if (!treeData) { treeData = { length: c.trees.length / 2, attributes: { getPosition: { value: c.trees, size: 2 } } }; TREE_DATA.set(c.trees, treeData); }
   out.push(
     new ColumnLayer({
-      id: "trees", ...cs, data: { length: c.trees.length / 2, attributes: { getPosition: { value: c.trees, size: 2 } } } as never,
+      id: "trees", ...cs, data: treeData as never,
       diskResolution: 6, radius: 1.8, extruded: true, getElevation: c.flat ? 4 : sceneElevationM(14.76), getFillColor: [22, 78, 40, 255], material: { ambient: 0.6, diffuse: 0.6, shininess: 8, specularColor: [30, 30, 30] },
       updateTriggers: { getElevation: [c.flat] },
     }),

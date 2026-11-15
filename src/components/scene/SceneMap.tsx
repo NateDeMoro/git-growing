@@ -16,6 +16,7 @@ import { centroid, toLocal } from "@/lib/scene/geometry";
 import type { Scene3DProps } from "./Scene3D";
 import Overlay from "./Overlay";
 import { fly, SW_ARIZONA, FARM_CENTER } from "./camera";
+import { registerUiCallbacks, uiActions, useUiStore } from "@/lib/uiStore";
 import { useAnimationLoop } from "./useAnimationLoop";
 import { DriftSim, RainSim, WindSim, WIND_PER_LAYER } from "./sim";
 import { buildLayers, BLOCKS, FB } from "./layers";
@@ -56,26 +57,13 @@ function getTrees() {
   return TREES;
 }
 
-export default function SceneMap(props: Scene3DProps) {
-  const frame = props.frame;
-  const { assessment } = props;
-  const mapRef = useRef<MapRef>(null);
-  const overlayRef = useRef<MapboxOverlay | null>(null);
-  const [tileUrl, setTileUrl] = useState<string | null>(null);
-  const [noTiles, setNoTiles] = useState(false);
-  const [illustrative, setIllustrative] = useState(false);
-  const [flat, setFlat] = useState(false);
-  const [spray, setSpray] = useState(true);
-  const [focusLocal, setFocusLocal] = useState(SITE.defaultBlockId);
-  const focusId = props.focusedBlockId ?? focusLocal;
-  const spraying = props.spraying ?? spray;
-
-  const S = useRef({
-    wind: new WindSim(frame.layers.length),
+function initState(layers: Layer[], focusId: string, props: Scene3DProps, spraying: boolean) {
+  return {
+    wind: new WindSim(layers.length),
     drift: new DriftSim(),
     rain: new RainSim(),
-    shown: frame.layers as Layer[],
-    from: frame.layers as Layer[],
+    shown: layers,
+    from: layers,
     easeT0: -1e9,
     ver: 0,
     neighbors: [] as Neighbor[],
@@ -90,7 +78,26 @@ export default function SceneMap(props: Scene3DProps) {
     spraying,
     onFocus: (id: string) => {},
     clock: 0,
-  });
+  };
+}
+
+export default function SceneMap(props: Scene3DProps) {
+  const frame = props.frame;
+  const { assessment } = props;
+  const mapRef = useRef<MapRef>(null);
+  const overlayRef = useRef<MapboxOverlay | null>(null);
+  const [tileUrl, setTileUrl] = useState<string | null>(null);
+  const [noTiles, setNoTiles] = useState(false);
+  const [illustrative, setIllustrative] = useState(false);
+  const [flat, setFlat] = useState(false);
+  const [spray, setSpray] = useState<boolean | null>(null);
+  const uiMode = useUiStore((u) => u.mode);
+  const [focusLocal, setFocusLocal] = useState(SITE.defaultBlockId);
+  const focusId = props.focusedBlockId ?? focusLocal;
+  const spraying = props.spraying ?? spray ?? uiMode === "sim";
+
+  const S = useRef<ReturnType<typeof initState> | null>(null);
+  if (!S.current) S.current = initState(frame.layers, focusId, props, spraying);
   const s = S.current;
   s.p = props; s.spraying = spraying; s.flat = flat;
 
@@ -128,7 +135,7 @@ export default function SceneMap(props: Scene3DProps) {
           out.push({ id, kind: "road", name: f.properties.name, line: (g.coordinates as number[][]).map(([lo, la]) => toLocal(lo, la, ORIGIN)) });
         }
       });
-      S.current.neighbors = out;
+      s.neighbors = out;
     }).catch(() => {});
   }, []);
 
@@ -144,6 +151,16 @@ export default function SceneMap(props: Scene3DProps) {
     s.drift.setTrees(getTrees().byBlock[focusId] ?? new Float32Array(0));
     s.zoomed = false;
   }, [focusId, s]);
+
+  // hotkeys / demo panel: uiStore callbacks (merged, not replaced)
+  useEffect(
+    () =>
+      registerUiCallbacks({
+        flyOverview: () => { const m = mapRef.current?.getMap(); if (m) { s.orbit = true; fly(m, "overview"); } },
+        toggle2D3D: (v) => setFlat(v === "2d"),
+      }),
+    [s],
+  );
 
   // controls
   useEffect(() => {
@@ -246,13 +263,17 @@ export default function SceneMap(props: Scene3DProps) {
     if (!m) return;
     // maplibre-gl 6 hides map.transform, which @deck.gl/mapbox 9.4 reads; expose it from the camera.
     if (!(m as unknown as { transform?: unknown }).transform) {
-      Object.defineProperty(m, "transform", { get: () => (m as unknown as { _camera: { transform: unknown } })._camera.transform, configurable: true });
+      try {
+        Object.defineProperty(m, "transform", { get: () => (m as unknown as { _camera?: { transform: unknown } })._camera?.transform, configurable: true });
+      } catch {
+        /* older maplibre exposes transform already */
+      }
     }
     { const ov = makeOverlay(); m.addControl(ov as never); overlayRef.current = ov; }
-    m.on("dragstart", () => { S.current.orbit = false; });
-    m.on("mousedown", () => { S.current.idleSince = 0; });
+    m.on("dragstart", () => { s.orbit = false; });
+    m.on("mousedown", () => { s.idleSince = 0; });
     m.on("error", (e) => { if ((e.error as { status?: number })?.status === 404 || String(e.error).includes("Failed to fetch")) setNoTiles(false); });
-    fly(m, S.current.flat ? "top" : "overview");
+    fly(m, s.flat ? "top" : "overview");
   }, []);
 
   const timeLabel = new Date(frame.time).toLocaleString("en-US", { timeZone: "America/Phoenix", weekday: "short", hour: "numeric", minute: "2-digit" });
@@ -279,8 +300,8 @@ export default function SceneMap(props: Scene3DProps) {
         tMin={range[0]} tMax={range[1]}
         focusId={focusId}
         onFocus={onFocus}
-        onOverview={() => props.controlsRef?.current ? props.controlsRef.current.flyToOverview() : (s.orbit = true, fly(mapRef.current!.getMap(), "overview"))}
-        onToggle2D={() => setFlat((f) => !f)}
+        onOverview={() => uiActions.flyOverview()}
+        onToggle2D={() => uiActions.toggle2D3D()}
         flat={flat}
         spraying={spraying}
         onSpray={setSpray}
