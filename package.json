@@ -7,7 +7,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "vitest run"
+    "test": "vitest run",
+    "fetch:products": "tsx scripts/fetch-products.ts",
+    "snapshot": "tsx scripts/snapshot.ts",
+    "fetch:tiles": "tsx scripts/fetch-tiles.ts"
   },
   "dependencies": {
     "@deck.gl/core": "^9.4.1",
