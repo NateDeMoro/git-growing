@@ -17,7 +17,7 @@ export interface Scene3DProps {
   controlsRef?: MutableRefObject<SceneControls | null>;
   focusedBlockId?: string;
   onFocusBlock?: (id: string) => void;
-  spraying?: boolean; // default true
+  spraying?: boolean; // ignored: drift always emits
 }
 
 const SceneMap = dynamic(() => import("./SceneMap"), {

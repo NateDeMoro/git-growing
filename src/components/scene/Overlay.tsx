@@ -3,22 +3,19 @@
 // Use when: SceneMap needs its on-screen controls.
 import type { Status } from "@/lib/contract";
 import { SITE } from "@/lib/site";
-import { tempRamp, STATUS_RGB } from "@/lib/scene/color";
+import { STATUS_RGB } from "@/lib/scene/color";
 
 export interface OverlayProps {
   status: Status;
-  topReason: string;
   timeLabel: string;
-  tMin: number;
-  tMax: number;
   focusId: string;
   onFocus: (id: string) => void;
   onOverview: () => void;
   onToggle2D: () => void;
   flat: boolean;
-  spraying: boolean;
-  onSpray: (v: boolean) => void;
-  illustrative: boolean;
+  bearing: number;
+  onRotate: (deg: number) => void;
+  onNorth: () => void;
   noTiles: boolean;
 }
 
@@ -32,10 +29,8 @@ export default function Overlay(p: OverlayProps) {
         <div className="pointer-events-auto flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-semibold" style={{ background: `rgba(${c},0.18)`, border: `1px solid rgba(${c},0.9)`, boxShadow: `0 0 14px rgba(${c},0.5)` }}>
           <span className="h-2.5 w-2.5 rounded-full" style={{ background: `rgb(${c})`, boxShadow: `0 0 8px rgb(${c})` }} />
           {p.status}
-          <span className="hidden max-w-[360px] truncate font-normal text-slate-200 sm:inline">{p.topReason}</span>
         </div>
         <div className={chip + " w-fit"}>{p.timeLabel}</div>
-        {p.illustrative && <div className={chip + " w-fit text-amber-300"}>illustrative neighbors</div>}
       </div>
       <div className="absolute right-3 top-3 flex flex-col items-end gap-2">
         <div className={chip}>Heights x10</div>
@@ -43,9 +38,17 @@ export default function Overlay(p: OverlayProps) {
           <button className={chip + " hover:bg-slate-800"} onClick={p.onOverview}>Overview (F)</button>
           <button className={chip + " hover:bg-slate-800"} onClick={p.onToggle2D}>{p.flat ? "3D" : "2D"} (V)</button>
         </div>
-        <label className={chip + " pointer-events-auto flex items-center gap-1"}>
-          <input type="checkbox" checked={p.spraying} onChange={(e) => p.onSpray(e.target.checked)} /> Spraying
-        </label>
+        <div className="pointer-events-auto flex items-center gap-1">
+          <button className={chip + " hover:bg-slate-800"} aria-label="Rotate view left" onClick={() => p.onRotate(-15)}>&#x21BA;</button>
+          <button className="flex h-11 w-11 items-center justify-center rounded-full border border-slate-500 bg-slate-950/80 hover:bg-slate-800" aria-label="Compass, click for north up" title="North up" onClick={p.onNorth}>
+            <svg viewBox="-20 -20 40 40" width="36" height="36" style={{ transform: `rotate(${-p.bearing}deg)` }}>
+              <polygon points="0,-16 5,0 -5,0" fill="#ef4444" />
+              <polygon points="0,16 5,0 -5,0" fill="#e2e8f0" />
+              <text x="0" y="-7" fontSize="7" textAnchor="middle" fill="#fff" fontWeight="700">N</text>
+            </svg>
+          </button>
+          <button className={chip + " hover:bg-slate-800"} aria-label="Rotate view right" onClick={() => p.onRotate(15)}>&#x21BB;</button>
+        </div>
       </div>
       <div className="absolute bottom-6 left-3 flex flex-col gap-1">
         <div className={chip + " pointer-events-auto flex max-w-[260px] flex-wrap gap-1"}>
@@ -54,12 +57,6 @@ export default function Overlay(p: OverlayProps) {
               {b.id}
             </button>
           ))}
-        </div>
-      </div>
-      <div className="absolute bottom-6 right-3 flex items-end gap-2">
-        <div className={chip + " flex items-stretch gap-2"}>
-          <div className="w-2.5 rounded" style={{ background: tempRamp(), height: 70 }} />
-          <div className="flex flex-col justify-between"><span>{p.tMax.toFixed(0)}°F</span><span>{p.tMin.toFixed(0)}°F</span></div>
         </div>
       </div>
       <div className="absolute bottom-1 right-2 text-[10px] text-slate-400">

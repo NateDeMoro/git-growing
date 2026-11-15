@@ -16,11 +16,11 @@ import { centroid, toLocal } from "@/lib/scene/geometry";
 import type { Scene3DProps } from "./Scene3D";
 import Overlay from "./Overlay";
 import { fly, SW_ARIZONA, FARM_CENTER } from "./camera";
-import { registerUiCallbacks, uiActions, useUiStore } from "@/lib/uiStore";
+import { registerUiCallbacks, uiActions } from "@/lib/uiStore";
 import { useAnimationLoop } from "./useAnimationLoop";
 import { DriftSim, RainSim, WindSim, WIND_PER_LAYER } from "./sim";
 import { buildLayers, BLOCKS, FB } from "./layers";
-import type { Neighbor, SceneCtx } from "./layers/types";
+import type { SceneCtx } from "./layers/types";
 
 // The bundled worker URL fails under Turbopack; serve a copy from /public (copied from node_modules/maplibre-gl/dist).
 maplibregl.setWorkerUrl("/maplibre-gl-worker.mjs");
@@ -57,7 +57,7 @@ function getTrees() {
   return TREES;
 }
 
-function initState(layers: Layer[], focusId: string, props: Scene3DProps, spraying: boolean) {
+function initState(layers: Layer[], focusId: string, props: Scene3DProps) {
   return {
     wind: new WindSim(layers.length),
     drift: new DriftSim(),
@@ -66,16 +66,12 @@ function initState(layers: Layer[], focusId: string, props: Scene3DProps, sprayi
     from: layers,
     easeT0: -1e9,
     ver: 0,
-    neighbors: [] as Neighbor[],
-    flashed: new Set<number>(),
-    flashTick: 0,
     zoomed: false,
     orbit: true,
     idleSince: 0,
     focus: focusId,
     flat: false,
     p: props,
-    spraying,
     onFocus: (id: string) => {},
     clock: 0,
   };
@@ -88,20 +84,17 @@ export default function SceneMap(props: Scene3DProps) {
   const overlayRef = useRef<MapboxOverlay | null>(null);
   const [tileUrl, setTileUrl] = useState<string | null>(null);
   const [noTiles, setNoTiles] = useState(false);
-  const [illustrative, setIllustrative] = useState(false);
+  const [bearing, setBearing] = useState(-15);
   const [flat, setFlat] = useState(false);
-  const [spray, setSpray] = useState<boolean | null>(null);
-  const uiMode = useUiStore((u) => u.mode);
   const [focusLocal, setFocusLocal] = useState(SITE.defaultBlockId);
   const focusId = props.focusedBlockId ?? focusLocal;
-  const spraying = props.spraying ?? spray ?? uiMode === "sim";
 
   // Intentional: mutable per-frame scene state shared with the render loop; refreshed each render (behavior unchanged).
   /* eslint-disable react-hooks/refs */
   const S = useRef<ReturnType<typeof initState> | null>(null);
-  if (!S.current) S.current = initState(frame.layers, focusId, props, spraying);
+  if (!S.current) S.current = initState(frame.layers, focusId, props);
   const s = S.current;
-  s.p = props; s.spraying = spraying; s.flat = flat;
+  s.p = props; s.flat = flat;
 
   const onFocus = useCallback((id: string) => {
     setFocusLocal(id);
@@ -120,26 +113,6 @@ export default function SceneMap(props: Scene3DProps) {
       .catch(() => ESRI)
       .then((u) => alive && setTileUrl(u));
     return () => { alive = false; };
-  }, []);
-
-  // neighbors
-  useEffect(() => {
-    fetch("/data/neighbors.geojson").then((r) => r.json()).then((fc) => {
-      setIllustrative(!!fc.illustrative);
-      const out: Neighbor[] = [];
-      fc.features.forEach((f: { properties: { kind: Neighbor["kind"]; name: string }; geometry: { type: string; coordinates: number[][] | number[][][] } }, id: number) => {
-        const g = f.geometry;
-        if (g.type === "Polygon") {
-          const ring = (g.coordinates as number[][][])[0].map(([lo, la]) => toLocal(lo, la, ORIGIN));
-          const c = centroid(ring);
-          const radius = Math.max(...ring.map(([x, y]) => Math.hypot(x - c[0], y - c[1])));
-          if (Math.hypot(c[0], c[1]) < 2500) out.push({ id, kind: f.properties.kind, name: f.properties.name, polygon: ring, centroid: c, radius });
-        } else if (g.type === "LineString") {
-          out.push({ id, kind: "road", name: f.properties.name, line: (g.coordinates as number[][]).map(([lo, la]) => toLocal(lo, la, ORIGIN)) });
-        }
-      });
-      s.neighbors = out;
-    }).catch(() => {});
   }, []);
 
   // frame change: ease
@@ -164,6 +137,36 @@ export default function SceneMap(props: Scene3DProps) {
       }),
     [s],
   );
+
+  // rotate: buttons, compass, arrow keys (capture phase so a focused range input does not also scrub)
+  const rotate = useCallback((deg: number) => {
+    const m = mapRef.current?.getMap();
+    if (!m || flat) return;
+    s.orbit = false;
+    s.idleSince = 0;
+    m.easeTo({ bearing: m.getBearing() + deg, duration: 300, essential: true });
+  }, [s, flat]);
+  const north = useCallback(() => {
+    const m = mapRef.current?.getMap();
+    if (!m) return;
+    s.orbit = false;
+    m.easeTo({ bearing: 0, duration: 500, essential: true });
+  }, [s]);
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      const t = e.target as HTMLElement | null;
+      if (t) {
+        const textLike = t.tagName === "INPUT" && !["range", "button", "checkbox"].includes((t as HTMLInputElement).type);
+        if (textLike || t.tagName === "SELECT" || t.tagName === "TEXTAREA" || t.isContentEditable) return;
+      }
+      e.preventDefault();
+      rotate(e.key === "ArrowLeft" ? -15 : 15);
+    };
+    window.addEventListener("keydown", onKey, true);
+    return () => window.removeEventListener("keydown", onKey, true);
+  }, [rotate]);
 
   // controls
   /* eslint-disable react-hooks/immutability -- s is a mutable ref-backed state object by design */
@@ -218,7 +221,6 @@ export default function SceneMap(props: Scene3DProps) {
     } as StyleSpecification;
   }, [tileUrl]);
 
-  const [range, setRange] = useState<[number, number]>([60, 70]);
   useAnimationLoop((dt, t) => {
     const ov = overlayRef.current;
     const map = mapRef.current?.getMap();
@@ -246,20 +248,8 @@ export default function SceneMap(props: Scene3DProps) {
     const lidFt = lidHeightFt({ layers, derived: fr.derived });
     const behavior = driftBehavior(fr, p.assessment);
     s.wind.update(dt, layers, 1.1 * gustLen);
-    s.drift.update(dt, layers, behavior, s.spraying, 0.9 * (behavior.regime === "storm" ? 1.8 : 1));
+    s.drift.update(dt, layers, behavior, true, 0.9 * (behavior.regime === "storm" ? 1.8 : 1));
     s.rain.update(dt, fr.weather.rainInHr, upper);
-    // neighbor flashes
-    if (++s.flashTick % 8 === 0) {
-      const fl = new Set<number>();
-      if (s.spraying) for (const n of s.neighbors) {
-        if (!n.centroid || n.kind === "road") continue;
-        for (let i = 0; i < s.drift.head.length / 3; i += 3) {
-          if (s.drift.age[i] < 1) continue;
-          if (Math.hypot(s.drift.head[i * 3] - n.centroid[0], s.drift.head[i * 3 + 1] - n.centroid[1]) < (n.radius ?? 10) + 15) { fl.add(n.id); break; }
-        }
-      }
-      s.flashed = fl;
-    }
     // orbit
     s.idleSince += dt;
     if (s.orbit && !s.flat && !map.isMoving() && s.idleSince > 6) map.setBearing(map.getBearing() + 1.5 * dt);
@@ -269,11 +259,10 @@ export default function SceneMap(props: Scene3DProps) {
     const ctx: SceneCtx = {
       frame: fr, assessment: p.assessment, layers, ver: s.ver, tSec: t, focusId: s.focus, flat: s.flat,
       origin: [ORIGIN.lon, ORIGIN.lat], lidFt, tMin: tMin - 1 - pad, tMax: tMax + 1 + pad,
-      trees: getTrees().all, neighbors: s.neighbors, flashed: s.flashed, behavior,
+      trees: getTrees().all, behavior,
       wind: s.wind.buf, drift: s.drift.buf, rain: s.rain.buf, driftN: s.drift.active, rainN: s.rain.active, windN: Math.min(layers.length, s.wind.layerCount) * WIND_PER_LAYER,
-      gustLen, stormLevel, onFocus: s.onFocus, spraying: s.spraying,
+      gustLen, stormLevel, onFocus: s.onFocus,
     };
-    setRange((r) => (Math.abs(r[0] - ctx.tMin) > 0.2 || Math.abs(r[1] - ctx.tMax) > 0.2 ? [ctx.tMin, ctx.tMax] : r));
     ov.setProps({ layers: buildLayers(ctx) });
   });
 
@@ -290,6 +279,9 @@ export default function SceneMap(props: Scene3DProps) {
     }
     { const ov = makeOverlay(); m.addControl(ov as never); overlayRef.current = ov; }
     m.on("dragstart", () => { s.orbit = false; });
+    m.on("rotatestart", () => { s.orbit = false; });
+    m.on("rotate", () => setBearing(m.getBearing()));
+    m.on("move", () => setBearing(m.getBearing()));
     m.on("mousedown", () => { s.idleSince = 0; });
     m.on("error", (e) => { if ((e.error as { status?: number })?.status === 404 || String(e.error).includes("Failed to fetch")) setNoTiles(false); });
     fly(m, s.flat ? "top" : "overview");
@@ -314,17 +306,15 @@ export default function SceneMap(props: Scene3DProps) {
       )}
       <Overlay
         status={assessment.status}
-        topReason={assessment.reasons[0]?.text ?? assessment.dropletNote}
         timeLabel={timeLabel}
-        tMin={range[0]} tMax={range[1]}
         focusId={focusId}
         onFocus={onFocus}
         onOverview={() => uiActions.flyOverview()}
         onToggle2D={() => uiActions.toggle2D3D()}
         flat={flat}
-        spraying={spraying}
-        onSpray={setSpray}
-        illustrative={illustrative}
+        bearing={bearing}
+        onRotate={rotate}
+        onNorth={north}
         noTiles={noTiles}
       />
     </div>

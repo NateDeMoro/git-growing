@@ -3,16 +3,6 @@ import type { Assessment, Layer, SceneFrame } from "@/lib/contract";
 import type { PathBuf } from "../sim";
 import type { DriftBehavior } from "@/lib/scene/drift";
 
-export interface Neighbor {
-  id: number;
-  kind: "building" | "school" | "road";
-  name: string;
-  polygon?: [number, number][]; // local m
-  line?: [number, number][];
-  centroid?: [number, number];
-  radius?: number;
-}
-
 export interface SceneCtx {
   frame: SceneFrame;
   assessment: Assessment;
@@ -26,8 +16,6 @@ export interface SceneCtx {
   tMin: number;
   tMax: number;
   trees: Float32Array; // local x,y pairs
-  neighbors: Neighbor[];
-  flashed: Set<number>;
   behavior: DriftBehavior;
   wind: PathBuf;
   drift: PathBuf;
@@ -38,5 +26,4 @@ export interface SceneCtx {
   gustLen: number;
   stormLevel: number;
   onFocus: (id: string) => void;
-  spraying: boolean;
 }

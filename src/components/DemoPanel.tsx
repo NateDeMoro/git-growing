@@ -52,7 +52,7 @@ export default function DemoPanel() {
   if (!open) return null;
   const keys: [string, string][] = [
     ["`", "Hide this panel"], ["1-6", "Jump to beat A-F"], ["Space", "Play / pause"], ["[  ]", `Speed (now ${speed}x)`],
-    ["R", "Clear log"], ["F", "Fly to overview"], ["V", `Toggle 2D/3D (now ${view})`], ["L", `Live / Simulate (now ${mode})`],
+    ["R", "Clear log"], ["← →", "Rotate view"], ["F", "Fly to overview"], ["V", `Toggle 2D/3D (now ${view})`], ["L", `Live / Simulate (now ${mode})`],
   ];
   return (
     <aside className="fixed bottom-24 right-4 z-50 w-80 rounded-xl border border-line bg-panel/95 p-4 shadow-2xl backdrop-blur" aria-label="Demo panel">
