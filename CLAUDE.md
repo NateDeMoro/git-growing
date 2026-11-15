@@ -10,8 +10,9 @@
 | src/lib/simLogger.ts | Log entry builder + frame-scanning sim logger | log dedupe/replay issues |
 | src/lib/engine/action.ts | Pure "Do this" sentence + CAUTION kind (care/wait, cautionAction) from assessment + next safe window + early warning | changing the action wording |
 | src/components/NowPanel.tsx | Now tab: map, verdict bar (StatusCard), Reasons (+Why these limits modal), DropletAdvice, Readings, bottom product + playback bars | Now tab layout |
-| src/components/ForecastChart.tsx | 7-day 5 ft / 30 ft temps + NWS mixing height | forecast chart |
-| src/lib/stationFrame.ts | AZMet reading -> single-layer frame | station card |
+| src/components/ForecastChart.tsx | 7-day 5 ft / 30 ft temps with a Tower selector | forecast chart |
+| src/components/StatusCard.tsx | Verdict bar: status, Do-this line, CAUTION kind, early warning, single-station line (shown only when the 5 ft station alone is more permissive) | verdict bar wording or layout |
+| src/lib/stationFrame.ts | AZMet reading -> single-layer frame (not shown in UI now) | reviving the AZMet station |
 | src/lib/forecast.ts | W5: frames from hours, windows, next GO, early warning, wobble | /api/now, /api/forecast, forecast UI |
 | src/components/DemoPanel.tsx | Global hotkeys + hidden panel | changing keys |
 | src/lib/engine/assess.ts | Pure risk engine: status, reasons, droplet recommendation | changing a rule or cutoff (cutoffs live in thresholds.ts) |
